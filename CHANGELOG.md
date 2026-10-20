@@ -2,6 +2,25 @@
 
 All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade steps: [docs/UPDATE.md](docs/UPDATE.md).
 
+## 1.2.6 (2026-10-20)
+
+### Fixed
+- **Cold-boot black screen** (plug-pull → all black until remote power cycle). With *Use Clean Home
+  as Home screen* Off, the 1.2.4 head handoff treated bare `operation/main` as a Home press.
+  Cold boot / `startup_appid` also uses `operation/main`, so Clean Home stayed black and the
+  old safety un-black required `document.hasFocus()` (often false at boot). Handoff now only
+  runs for `entry_point=smarthub_key` (real Home key). Safety clears `ch-handoff` after ~1.5 s
+  without requiring focus; an extra 1 s clear runs when `__CH_EARLY` was set. Toggle-Off
+  no-flash for real Home presses is unchanged.
+- Docs: cold-boot notes in README.
+
+### Added
+- **`tvplus-watcher/`** — non-root resident loop that redirects the Samsung TV Plus button to
+  YouTube (polls `memory/appfw/current_fullscreen_appid`, launches YouTube, kills HEP).
+  Samsung UEP + web-app limits mean it does not survive reboot; use
+  `scripts/windows/tvplus_watch_rearm.ps1` on the PC to re-arm when the TV is online.
+  Does not touch Home originals or appsvc aliases.
+
 ## 1.2.5 (2026-10-20)
 
 ### Added

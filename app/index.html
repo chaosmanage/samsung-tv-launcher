@@ -2,7 +2,7 @@
 <html lang="en-IN">
 <head>
 <script>
-/* Clean Home 1.2.4: Home-key handoff before anything else loads (toggle Off). Keep in sync with
+/* Clean Home 1.2.6: Home-key handoff before anything else loads (toggle Off). Keep in sync with
    isHomeTriggeredLaunch/launchKey in main.js. Black page, launch Samsung Home, main.js de-dupes via __CH_EARLY. */
 (function () {
   try {
@@ -10,7 +10,8 @@
     if (p.useAsHome !== false) return;
     var app = tizen.application, r = app.getCurrentApplication().getRequestedAppControl();
     var ac = r && r.appControl, d = (ac && ac.data) || [], i, k, v, home = false, skip = false, key = '';
-    if (ac && /\/operation\/main$/i.test(ac.operation || '')) home = true;
+    /* Only the remote Home key (entry_point=smarthub_key). Bare operation/main is also cold-boot
+       / startup_appid — handing that off left a permanent black screen after plug-pull. */
     for (i = 0; i < d.length; i++) {
       k = d[i].key; v = String(d[i].value).slice(0, 60);
       if (k === 'entry_point' && v === 'smarthub_key') home = true;

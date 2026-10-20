@@ -1,6 +1,6 @@
 # Clean Home
 
-**A quiet, ad-free home screen for Samsung Tizen TVs.** Version **1.2.5**.
+**A quiet, ad-free home screen for Samsung Tizen TVs.** Version **1.2.6**.
 
 Clean Home (`KsHome0001.CleanHome`) replaces Samsung's busy, ad-filled Smart Hub with a calm full-screen
 photo, a clock with local weather, and a single glass dock of the apps you actually use. It's built for
@@ -146,6 +146,28 @@ Any of these (in order of preference):
 4. Last resort: factory reset (Settings → General & Privacy → Reset).
 
 Samsung Home is also always one press away in Clean Home's header.
+
+## TV Plus button → YouTube
+
+The dedicated Samsung TV Plus remote key cannot be remapped via appsvc aliases or
+`db/tvplus/equivalent_appid_mapping` (the button launches `HEPsqFNie0.tvplusstandalone`
+directly). A small **non-root resident watcher** redirects that press to YouTube:
+
+- Source and install notes: [`tvplus-watcher/`](tvplus-watcher/)
+- After a TV reboot the watcher dies (web Clean Home cannot spawn a shell; UEP blocks
+  unsigned files). Re-arm from the PC with
+  [`scripts/windows/tvplus_watch_rearm.ps1`](scripts/windows/tvplus_watch_rearm.ps1)
+  (Task Scheduler every few minutes while the PC is on the LAN), or run `watch_start`
+  once via the uid-901 injection channel.
+
+## Cold-boot black screen (1.2.6)
+
+With **Use Clean Home as Home screen** Off, versions 1.2.4–1.2.5 treated bare
+`operation/main` like a Home-key press and blacked the page to hand off to Samsung Home.
+A **plug-pull cold boot** also launches Clean Home via `operation/main` (`startup_appid`),
+so the screen could stay black until a remote power cycle. 1.2.6 only hands off on
+`entry_point=smarthub_key` (real Home key) and always clears the blackout within ~1–1.5 s
+if Samsung Home did not take over.
 
 ## FAQ and troubleshooting
 

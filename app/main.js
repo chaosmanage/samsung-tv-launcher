@@ -2333,10 +2333,11 @@
      - Opened from Samsung Home's app row -> LaunchFromHome=1, CallerId=com.samsung.tv.home.media. App-list: never redirect.
      - sdb/app list, recovery relaunch -> no entry_point.  Never redirect. */
   function isHomeTriggeredLaunch(info) {
-    var op = (info && info.op) || '', data = (info && info.data) || [], d = '|' + data.join('|') + '|';
+    var data = (info && info.data) || [], d = '|' + data.join('|') + '|';
     if (/\|LaunchFromHome=1\||\|Entry=launcher\||__K_EX_RECOVERY_LAUNCH=true/.test(d)) return false;
+    /* Remote Home key only. Bare operation/main is also cold-boot / startup_appid (Use-as-Home Off
+       was blacking the screen until a remote power cycle). */
     if (/\|entry_point=smarthub_key\|/.test(d)) return true;
-    if (/\/operation\/main$/i.test(op)) return true;
     return false;
   }
   /* One Home press = one launch request. The TV stamps each request with __K_APP_LAUNCH_START_TIME; a later
@@ -2380,10 +2381,12 @@
   window.addEventListener('blur', function () {
     if (HANDOFF.at && !HANDOFF.blurLogged) { HANDOFF.blurLogged = true; chDebug('home-handoff-front', { hook: HANDOFF.hook, ms: Date.now() - HANDOFF.at, early: window.__CH_EARLY || null }); }
   });
-  /* Safety: never stay black if Samsung Home didn't take focus. */
+  /* Safety: never stay black. Do not require hasFocus() — on cold boot the page can be
+     visible but unfocused, and the old 3s+hasFocus guard never fired. */
   setInterval(function () {
-    if (HANDOFF.at && Date.now() - HANDOFF.at > 3000 && /\bch-handoff\b/.test(document.documentElement.className) && !document.hidden && document.hasFocus && document.hasFocus()) handoffShow('safety-still-focused');
-  }, 1000);
+    if (HANDOFF.at && Date.now() - HANDOFF.at > 1500 && /\bch-handoff\b/.test(document.documentElement.className)) handoffShow('safety-timeout');
+  }, 500);
+  if (window.__CH_EARLY) setTimeout(function () { handoffShow('early-safety-1s'); }, 1000);
 
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
   function launchInfo() {
