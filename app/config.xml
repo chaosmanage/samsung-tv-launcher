@@ -14,8 +14,6 @@
   </tizen:app-control>
   <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
   <tizen:privilege name="http://tizen.org/privilege/application.info"/>
-  <tizen:privilege name="http://tizen.org/privilege/appmanager.kill"/>
-  <tizen:privilege name="http://tizen.org/privilege/appmanager.kill.bgapp"/>
   <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
   <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
   <tizen:privilege name="http://tizen.org/privilege/system"/>
