@@ -31,6 +31,11 @@ All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade step
   (20 Oct 2026, ~21:10 IST): with *Use Clean Home as Home screen* Off, Home goes to Samsung Home with no
   Clean Home flash. Debug-log timings on that build (20:56:33–20:56:51 IST, handoff on the `visible` hook while
   the screen stays black): Samsung Home in front 642 / 357 / 576 ms (launch call 233 / 114 / 203 ms).
+  Kunal's test presses 21:13:57–21:14:12 IST: 345 / 101 / 167 / 392 / 329 ms (launch call 176 / 107 / 143 / 214 / 101 ms).
+- **1.2.5 installed on the TV** (21:16 IST debug build to verify, 21:17 IST release build, pid 3421):
+  prefs kept on upgrade (dock 9 apps incl. Spotify, *Use Clean Home as Home screen* Off as Kunal left it,
+  Bing daily on). On the TV, `bingnext` loaded the en-IN pool (8) and switched to the next photo
+  (MahaNavami2026) in under a second; `bingtoday` switched back to today's (BrownSloth).
 
 ### Unchanged on purpose
 - Visuals elsewhere: clock and header text stay white, dock, glass and fonts as in 1.2.4 hotfix 3.
