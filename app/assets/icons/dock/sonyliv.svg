@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="56" ry="56" fill="#000000"/>
+  
+  <defs><linearGradient id="liv" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#F7C600"/><stop offset=".45" stop-color="#F36F21"/><stop offset="1" stop-color="#E3125B"/>
+  </linearGradient></defs>
+  <text x="128" y="88" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="30" font-weight="700" fill="#fff" letter-spacing="10">SONY</text>
+  <text x="128" y="175" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="92" font-weight="900" fill="url(#liv)">LIV</text>
+
+</svg>

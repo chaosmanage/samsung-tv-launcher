@@ -1,3 +1,7 @@
+## Clean Home 1.2.2
+
+Bundled squircle dock icons, live glass over Bing wallpaper, bold clock/weather, HDMI via `SMSourceAPP`, Art/Ambient app chain, and a Settings soft-toggle to send Home to Samsung.
+
 # Clean Home
 
 A quieter home screen for Kunal's Samsung Crystal UHD TV (`UA43DU7660KLXL`), based on **[CleanFrame](https://github.com/nthnclrk/CleanFrame) by Nathan Clark** (MIT License).

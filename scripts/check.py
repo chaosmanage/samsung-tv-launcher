@@ -55,4 +55,8 @@ main = (app / 'main.js').read_text()
 assert "id: 'hdmi'" in main and "id: 'samsunghome'" in main
 assert 'Wakad, Pune' in main
 assert 'api.open-meteo.com' in main
+for dock_icon in ['hdmi','youtube','netflix','zee5','primevideo','hotstar','sonyliv','browser','samsunghome']:
+    assert (app / ('assets/icons/dock/' + dock_icon + '.svg')).is_file(), 'Missing dock icon: ' + dock_icon
+assert 'useAsHome' in main
+assert "SMSourceAPP" in (app / 'device.js').read_text()
 print('Widget identity, version and bundled resources are valid.')

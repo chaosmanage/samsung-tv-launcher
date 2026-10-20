@@ -1,4 +1,4 @@
-/* Clean Home v1.2.1 — based on CleanFrame by Nathan Clark (MIT). Static materials, local preferences and public Tizen app controls. */
+/* Clean Home v1.2.2 — based on CleanFrame by Nathan Clark (MIT). Static materials, local preferences and public Tizen app controls. */
 (function () {
   'use strict';
 
@@ -140,22 +140,26 @@
     return '<span class="mark' + (markProbes[id] === 'bad' ? ' is-bad' : '') + '" data-mark="' + id + '" style="width:' + w + 'px;height:' + h + 'px">'
       + (maskSupport ? '<span class="mk" style="' + st + ';-webkit-mask-image:url(' + ICONS + id + '.svg);mask-image:url(' + ICONS + id + '.svg)"></span>' : '<img alt="" src="' + ICONS + id + '.svg" style="' + st + '">') + '</span>';
   }
+  var DOCK_ICON = {
+    hdmi: true, youtube: true, netflix: true, zee5: true, primevideo: true,
+    hotstar: true, sonyliv: true, browser: true, samsunghome: true
+  };
+  function dockIconSrc(id) { return ICONS + 'dock/' + id + '.svg'; }
   function appMark(a, w, h, size) {
-    /* Uniform tile: same size, padding, radius and neutral backplate for every dock icon.
-       Official logos come from the TV iconPath; HDMI/Samsung Home use outline SVGs. */
-    var box = 'width:' + w + 'px;height:' + h + 'px';
-    if (a.icon) {
-      return '<span class="mark tile-icon native-icon has-native-icon" style="' + box + '">'
-        + '<img alt="" data-native-icon="true" src="' + esc(a.icon) + '"></span>';
+    /* Bundled full-bleed squircle — the image IS the tile (no nested gray backplate). */
+    var side = Math.min(w, h, size || w);
+    if (side < 96) side = Math.max(w, h);
+    var box = 'width:' + side + 'px;height:' + side + 'px';
+    if (DOCK_ICON[a.id]) {
+      return '<span class="mark bundled-icon" style="' + box + '"><img alt="" src="' + dockIconSrc(a.id) + '"></span>';
     }
     if (a.outline && SVG[a.outline]) {
-      return '<span class="mark tile-icon outline-mark" style="' + box + '">' + icon(a.outline, 'outline-ico', true) + '</span>';
+      return '<span class="mark bundled-icon outline-mark" style="' + box + '">' + icon(a.outline, 'outline-ico', true) + '</span>';
     }
-    if (a.mark && (maskSupport || S.c.bg !== 'light')) return markHtml(a.brand || a.id, w, h, size);
     var words = a.name.split(/\s+/), letters = words[0].charAt(0) + (words.length > 1 ? words[1].charAt(0) : '');
-    return '<span class="mark tile-icon monogram" style="' + box + ';font-size:' + Math.round(size * .55) + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
+    return '<span class="mark bundled-icon monogram" style="' + box + ';font-size:' + Math.round(side * .36) + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
   }
-  function smallMark(a) { return appMark(a, 56, 44, 36); }
+  function smallMark(a) { return appMark(a, 56, 56, 56); }
   var measureCanvas = document.createElement('canvas'), measureContext = measureCanvas.getContext('2d'), measureSpan = document.createElement('span');
   measureSpan.setAttribute('aria-hidden', 'true');
   measureSpan.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;white-space:pre;font-synthesis:none;';
@@ -356,7 +360,8 @@
       font: pick(modern.font, LOOK_VALUES.font, 'manrope'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
       home: h, recent: recent, lastApp: h.indexOf(s.lastApp) >= 0 ? s.lastApp : h[0],
       mode: pick(s.mode, MODES.map(function (m) { return m.id; }), 'fixed'),
-      dailyBing: s.dailyBing !== false
+      dailyBing: s.dailyBing !== false,
+      useAsHome: s.useAsHome !== false
     };
   }
   function serialise(c) {
@@ -381,7 +386,7 @@
   }
   function clearSession() { S.undo = []; S.removedAt = {}; S.note = null; S.err = null; }
   function begin() { S.note = null; }
-  function next(home, recent) { var c = lookOf(S.c); c.home = home; c.recent = recent; c.lastApp = S.c.lastApp; c.mode = S.c.mode; c.dailyBing = S.c.dailyBing !== false; return c; }
+  function next(home, recent) { var c = lookOf(S.c); c.home = home; c.recent = recent; c.lastApp = S.c.lastApp; c.mode = S.c.mode; c.dailyBing = S.c.dailyBing !== false; c.useAsHome = S.c.useAsHome !== false; return c; }
   function snap() { return { home: S.c.home.slice(), recent: S.c.recent.slice() }; }
   function pushRecent(list, id) { return [id].concat(without(list, id)).slice(0, 5); }
   function write(c, label) {
@@ -887,7 +892,8 @@
     if (t.group === 'rotation') return [{ id: 'mode', title: '', items: options('mode', MODES.map(function (m) { return m.id; }), flat),
       reason: flat ? 'Choose Photo in Background to use rotation.' : 'Timed changes pause while Settings or another panel is open.' }];
     return [{ id: 'samsung', title: '', items: [
-      { action: 'samsung.home', label: 'Samsung Home', description: 'Open Samsung’s Home screen' },
+      { action: 'samsung.useAsHome', label: S.c.useAsHome ? 'Use as Home screen: On' : 'Use as Home screen: Off', description: S.c.useAsHome ? 'Home opens Clean Home. Turn off to send Home to Samsung Smart Hub.' : 'Home presses open Samsung Smart Hub. Turn on to use Clean Home again.' },
+      { action: 'samsung.home', label: 'Open Samsung Home', description: 'Open Samsung’s Home screen now' },
       { action: 'samsung.settings', label: 'TV settings', description: 'Picture, sound and network settings' }
     ] }];
   }
@@ -942,6 +948,14 @@
       }
     }
     else if (item.action === 'background.rotation') openAppearance('rotation');
+    else if (item.action === 'samsung.useAsHome') {
+      var cHome = next(S.c.home.slice(), S.c.recent.slice());
+      cHome.useAsHome = !S.c.useAsHome;
+      if (write(cHome, 'Use as Home')) {
+        if (!cHome.useAsHome) perform('Samsung Home', FrameDevice.home);
+        else render();
+      }
+    }
     else if (item.action === 'samsung.home') perform('Samsung Home', FrameDevice.home);
     else if (item.action === 'samsung.settings') perform('TV settings', FrameDevice.settings);
   }
@@ -1085,6 +1099,8 @@
     if (S.c.layout === 'list') renderList(hs);
     else { photoMode = null; renderDock(hs); }
     renderAppFocusName(hs);
+    var photoLive = document.getElementById('photo');
+    if (photoLive && photoLive.src && S.c.bg === 'photo') syncGlassFromSrc(photoLive.src);
   }
 
   function clockText() {
@@ -1176,19 +1192,34 @@
     var d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
   }
+  function syncGlassFromSrc(src) {
+    /* Dock mat must show the SAME photo as the stage (Bing or bundled), not a stale material. */
+    var mat = document.getElementById('matImg');
+    if (!mat || !src) return;
+    if (mat.getAttribute('data-live') === src) return;
+    mat.setAttribute('data-live', src);
+    mat.src = src;
+    if (mat.className.indexOf('is-live-glass') < 0) mat.className += ' is-live-glass';
+  }
   function applyBingPhoto(url) {
-    if (!url || !IMG || !IMG.bg && !document.getElementById('photo')) return;
+    if (!url) return;
     var photo = document.getElementById('photo');
     if (!photo) return;
-    if (photo.getAttribute('data-bing') === url) return;
-    photo.setAttribute('data-bing', url);
-    photo.src = url;
+    if (photo.getAttribute('data-bing') !== url) {
+      photo.setAttribute('data-bing', url);
+      photo.src = url;
+    }
+    syncGlassFromSrc(url);
   }
   function clearBingPhoto() {
     var photo = document.getElementById('photo');
     if (!photo) return;
     photo.removeAttribute('data-bing');
-    if (S.c && S.c.wall) photo.src = WP + S.c.wall + '.jpg';
+    if (S.c && S.c.wall) {
+      var src = WP + S.c.wall + '.jpg';
+      photo.src = src;
+      syncGlassFromSrc(src);
+    }
   }
   function fetchBingDaily(force) {
     if (!S.c || !S.c.dailyBing || S.c.bg !== 'photo') return;
@@ -1209,6 +1240,12 @@
         try { localStorage.setItem('cleanhome.bing', JSON.stringify({ url: url, date: BING.date })); } catch (e) {}
         applyBingPhoto(url);
       })['catch'](function () { if (!done) { done = true; clearTimeout(timer); BING.busy = false; BING.lastFail = Date.now(); } });
+  }
+
+  function enforceHomePreference() {
+    if (!S.c || S.c.useAsHome !== false) return;
+    if (!window.FrameDevice || !FrameDevice.home) return;
+    FrameDevice.home(function () {});
   }
   function initBing() {
     try {
@@ -1333,7 +1370,7 @@
     var a, body;
     if (it.kind === 'add') return '<span class="add">' + icon('plus') + '</span><span class="label">' + (full ? 'Home is full' : 'Add app') + '</span>';
     a = app(it.id);
-    body = S.c.apps === 'text' ? '' : appMark(a, S.c.apps === 'icons' ? 136 : 120, S.c.apps === 'icons' ? 88 : 72, S.c.apps === 'icons' ? 72 : 58);
+    body = S.c.apps === 'text' ? '' : appMark(a, 120, 120, 120);
     return body + (S.c.apps === 'icons' ? '' : '<span class="label" style="font-size:' + dockLabelSize(a.id) + 'px;top:' + ((S.c.apps === 'text' ? 28 : 128) + fontShift('primary', dockLabelSize(a.id))) + 'px"><span class="label-ink">' + esc(a.name) + '</span></span>') + '<span class="nudge nudge-l">' + icon('left') + '</span><span class="nudge nudge-r">' + icon('right') + '</span>';
   }
   /* A wide label can reach the shelf before its icon. Check the rendered icon box,
@@ -1479,7 +1516,7 @@
     phRows.style.top = (compact ? 72 : 148) + 'px';
     keyed(phRows, items, function (row, it, i) {
       var typography = photoLabel(it.id, compact), focus = rowFocus && i === anchor, lifted = hs.lifted && i === anchor, markImage, body = '';
-      if (S.c.apps !== 'text') body += appMark(app(it.id), S.c.apps === 'icons' ? compact ? 64 : 88 : compact ? 60 : 84, S.c.apps === 'icons' ? compact ? 64 : 88 : compact ? 44 : 64, S.c.apps === 'icons' ? compact ? 52 : 72 : compact ? 42 : 54);
+      if (S.c.apps !== 'text') body += appMark(app(it.id), compact ? 72 : 96, compact ? 72 : 96, compact ? 72 : 96);
       if (S.c.apps !== 'icons') body += '<span class="ph-name" style="font-size:' + typography.size + 'px;top:' + typography.top + 'px">' + esc(app(it.id).name) + '</span>';
       setContent(row, it.id + '|' + typography.size + '|' + S.c.bg + '|' + S.c.apps + '|' + homeFont(), '<span class="ph-group">' + body + '</span><span class="ph-move ph-move-up">' + icon('up') + '</span><span class="ph-move ph-move-down">' + icon('down') + '</span>');
       markImage = row.querySelector('.mark img');
@@ -1672,7 +1709,7 @@
   };
   function gridTileHtml(id) {
     var a = app(id), state = onHome(id) ? badge(true) + '<span>On Home</span>' : '';
-    return '<span class="panel-content">' + appMark(a, 120, 72, 58) + '<span class="label">' + esc(a.name) + '</span></span><span class="state">' + state + '</span>';
+    return '<span class="panel-content">' + appMark(a, 96, 96, 96) + '<span class="label">' + esc(a.name) + '</span></span><span class="state">' + state + '</span>';
   }
   var FILLS = {
     apps: function (t, el) {
@@ -1807,7 +1844,14 @@
     phFields.concat(utFields).forEach(function (el) { var p = el._placement; if (p) fieldTransform(el, p.x, p.y, p.width, p.height); });
     S.wallShown = look.wall; S.wallPending = null; S.wallError = null;
     if (S.c && S.c.dailyBing && look.bg === 'photo') setTimeout(function () { fetchBingDaily(false); }, 0);
-    else if (S.c && !S.c.dailyBing) clearBingPhoto();
+    else if (S.c && !S.c.dailyBing) {
+      clearBingPhoto();
+      var photo = document.getElementById('photo');
+      if (photo && photo.src) syncGlassFromSrc(photo.src);
+    } else {
+      var p2 = document.getElementById('photo');
+      if (p2 && p2.src) syncGlassFromSrc(p2.src);
+    }
   }
   function cleanPatch(patch) {
     var out = {}, k;
@@ -1996,9 +2040,10 @@
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
     if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); }
-    else { release(); after(); updateClock(); focusStage(); }
+    else { release(); after(); updateClock(); focusStage(); enforceHomePreference(); }
   });
   window.addEventListener('resize', fit);
+  window.addEventListener('pageshow', function () { enforceHomePreference(); });
 
   /* Readable browser checks use the real state and actions, without fake outcomes. */
   var NAV = { left: 'left', right: 'right', up: 'up', down: 'down', ok: 'ok', enter: 'ok', back: 'back', escape: 'back' };
@@ -2036,6 +2081,7 @@
   initWeather();
   initBing();
   refreshCatalog();
+  enforceHomePreference();
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
 })();

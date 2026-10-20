@@ -35,10 +35,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .is-sheet .home,.is-sheet .bg{visibility:hidden}
 
 /* Caption: the clock, or the name of the mode Home is in */
-.caption{position:absolute;left:140px;top:72px;display:flex;flex-direction:column;gap:4px;max-width:1040px}
+.caption{position:absolute;left:140px;top:72px;display:flex;flex-direction:column;gap:6px;max-width:1040px;z-index:4;padding:18px 28px 22px;border-radius:28px;background:linear-gradient(135deg,rgba(6,8,12,.42),rgba(6,8,12,.18));box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.bg-light .caption{background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.22))}
 .clock,.cap-title{font-size:48px;line-height:64px;font-weight:500;letter-spacing:-1.5px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.22)}
-.clock{font-size:76px;line-height:88px;font-weight:500;letter-spacing:-2px}
-.clock .clock-ap{font-size:28px;line-height:1;margin-left:12px;opacity:.72;letter-spacing:.04em;vertical-align:super;font-weight:500}
+.clock{font-size:80px;line-height:90px;font-weight:800;letter-spacing:-2px;text-shadow:0 2px 8px rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.4)}
+.clock .clock-ap{font-size:30px;line-height:1;margin-left:12px;opacity:.85;letter-spacing:.04em;vertical-align:super;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.5)}
 .clock{font-variant-numeric:tabular-nums}
 .cap-line{max-width:100%;font-size:30px;line-height:40px;font-weight:500;letter-spacing:-.2px;color:rgba(255,255,255,.88);text-shadow:0 1px 2px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .warn{display:inline-flex;gap:12px;align-items:flex-start;color:var(--warn)}
@@ -116,8 +117,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .monogram span{position:relative;width:1.65em;height:1.65em;display:flex;align-items:center;justify-content:center;border-radius:.4em}.monogram span::after{content:"";position:absolute;inset:0;border:2px solid currentColor;border-radius:inherit;opacity:.38}
 .native-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .native-icon.has-native-icon>span{visibility:hidden}
-.tile .mark{position:absolute;left:84px;top:34px;opacity:.84;transition:opacity 160ms linear,transform var(--t) var(--ease)}
-.tile .label{position:absolute;left:4px;right:4px;top:128px;text-align:center;font-size:36px;line-height:44px;letter-spacing:-.8px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.84;transition:opacity 160ms linear}
+.tile .mark{position:absolute;left:84px;top:34px;opacity:.92;transition:opacity 160ms linear,transform var(--t) var(--ease)}
+.tile .mark.bundled-icon{left:50%;top:18px;margin-left:-54px;width:108px;height:108px;opacity:1}
+.a-icons .tile .mark.bundled-icon{margin-left:-68px;top:40px;width:136px;height:136px}
+.tile .mark.bundled-icon img{position:relative;inset:auto;width:100%;height:100%;object-fit:contain;display:block;border-radius:0}
+.tile.is-focus .mark.bundled-icon,.tile.is-lifted .mark.bundled-icon{transform:translateY(-4px) scale(1.05)}
+.tile .label{position:absolute;left:4px;right:4px;top:132px;text-align:center;font-size:34px;line-height:40px;letter-spacing:-.6px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;transition:opacity 160ms linear}
 .tile .t-name{position:absolute;left:12px;right:12px;top:72px;text-align:center;font-size:40px;line-height:56px;letter-spacing:-1px;font-weight:600;white-space:nowrap;overflow:hidden;opacity:.84;transition:opacity 160ms linear}
 .tile.is-focus .mark,.tile.is-focus .label,.tile.is-focus .t-name,.tile.is-lifted .mark,.tile.is-lifted .label,.tile.is-lifted .t-name{opacity:1}
 .tile.is-focus .mark,.tile.is-lifted .mark{transform:translateY(-3px) scale(1.04)}
@@ -601,33 +606,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 @media(prefers-reduced-motion:reduce){.is-font-switch .home .ph-name,.is-font-switch .home .clock,.is-font-switch .home .tile .label,.is-font-switch .home .u-label,.is-font-switch .home .app-focus-name,.is-font-switch .home .util-focus-label{animation-duration:120ms}}
 
 
-/* Clean Home v1.2.1: weather, uniform tile icons, HDMI overlay */
-.caption .weather{display:inline-flex;align-items:center;gap:10px;margin-left:22px;margin-top:6px;opacity:.9;font-size:22px;letter-spacing:.02em}
-.caption .wx-ico{width:28px;height:28px;flex:none;opacity:.92}
-.caption .wx-temp{font-weight:600;font-size:30px}
-.caption .wx-cond{opacity:.75}
-.caption .wx-place{opacity:.55;font-size:18px}
-.mark.tile-icon{
-  display:flex;align-items:center;justify-content:center;
-  border-radius:22px;overflow:hidden;
-  background:rgba(255,255,255,.14);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
-}
-.bg-light .mark.tile-icon{background:rgba(20,18,16,.08);box-shadow:inset 0 0 0 1px rgba(20,18,16,.08)}
-.mark.tile-icon img{
-  position:relative;inset:auto;width:72%;height:72%;
-  object-fit:contain;border-radius:0;display:block;
-}
-.mark.tile-icon.outline-mark .ico{width:54%;height:54%;stroke-width:1.6}
-.mark.tile-icon.monogram span{
-  position:relative;width:72%;height:72%;display:flex;align-items:center;justify-content:center;
-  border-radius:14px;font-weight:600;
-}
-.mark.tile-icon.monogram span::after{display:none}
-body.is-hdmi .home,body.is-hdmi .appearance,body.is-hdmi .sheet,body.is-hdmi .utils,body.is-hdmi .caption{visibility:hidden}
-body.is-hdmi .stage{background:#000}
-body.is-hdmi::after{
-  content:"HDMI · press BACK to return";position:fixed;left:50%;bottom:48px;transform:translateX(-50%);
-  padding:12px 22px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:22px;
-  letter-spacing:.02em;pointer-events:none;z-index:99;
-}
+/* Clean Home v1.2.2: bundled squircles, live glass, bold header */
+.caption .weather{display:inline-flex;align-items:center;gap:12px;opacity:.95;font-size:28px;letter-spacing:.01em;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.45)}
+.caption .wx-ico{width:34px;height:34px;flex:none;opacity:.96;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
+.caption .wx-temp{font-weight:800;font-size:36px}
+.caption .wx-cond{opacity:.9;font-weight:700;font-size:26px}
+.caption .wx-place{opacity:.8;font-size:24px;font-weight:600}
+.mark.bundled-icon{background:none;box-shadow:none;border-radius:0;overflow:visible}
+.mark.bundled-icon.monogram{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border-radius:28px}
+.mat-img.is-live-glass{filter:blur(36px) saturate(1.08) brightness(.92);-webkit-filter:blur(36px) saturate(1.08) brightness(.92)}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="56" ry="56" fill="#000000"/>
+  
+  <g transform="translate(68,36) scale(1.15)">
+    <path d="M0 0h32v160H0z" fill="#564d4d"/>
+    <path d="M80 0h32v160H80z" fill="#564d4d"/>
+    <path d="M0 0l80 160h32L32 0H0z" fill="#E50914"/>
+  </g>
+
+</svg>
