@@ -41,3 +41,13 @@ Non-developer install guide: **INSTALL.md**.
 ```
 cd tests && npm i puppeteer-core && node qa-test.js   # uses /usr/bin/google-chrome
 ```
+
+## Multitasking / "Autorun Last App" (v1.1.0)
+- `config.xml`: `background-support="enable"`, `<tizen:app-control>` with
+  `<tizen:src name="index.html" reload="disable"/>` and the
+  `http://samsung.com/appcontrol/operation/eden_resume` operation, plus
+  metadata `http://samsung.com/tv/metadata/multitasking.support=true`.
+- `main.js`: on `visibilitychange` hidden → leave HDMI view, close pop-ups/toasts;
+  on resume → same cleanup, re-focus (`RESUME_FOCUS` in `js/apps.js`: `'last'`/`'first'`),
+  refresh clock, re-read installed apps.
+- Rebuild the PDF guide: `python3 docs/build-pdf.py` (needs `markdown` + Chrome).

@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://kunal.home/CleanHome" version="1.0.0" viewmodes="maximized">
+        id="http://kunal.home/CleanHome" version="1.1.0" viewmodes="maximized">
     <tizen:application id="KsHome0001.CleanHome" package="KsHome0001" required_version="2.3"/>
     <name>Clean Home</name>
     <description>Ad-free launcher: HDMI, YouTube, Netflix, ZEE5, Prime Video, JioHotstar, Sony LIV, Internet.</description>
     <author>Kunal S</author>
     <icon src="icon.png"/>
     <content src="index.html"/>
+    <!-- Multitasking / "Autorun Last App": when the TV resumes this app, keep the
+         running page instead of reloading it (Samsung multitasking guide). -->
+    <tizen:app-control>
+        <tizen:src name="index.html" reload="disable"/>
+        <tizen:operation name="http://samsung.com/appcontrol/operation/eden_resume"/>
+    </tizen:app-control>
     <feature name="http://tizen.org/feature/screen.size.all"/>
     <tizen:profile name="tv-samsung"/>
 
@@ -20,8 +26,10 @@
     <tizen:privilege name="http://tizen.org/privilege/system"/>
     <tizen:privilege name="http://tizen.org/privilege/fullscreen"/>
 
-    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable"
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="enable"
                    encryption="disable" install-location="auto" hwkey-event="enable"/>
     <tizen:metadata key="http://tizen.org/metadata/app_ui_type/base_screen_resolution" value="extensive"/>
+    <!-- Declares multitasking support (requested; not listed in Samsung's current config docs, harmless if ignored) -->
+    <tizen:metadata key="http://samsung.com/tv/metadata/multitasking.support" value="true"/>
     <access origin="*" subdomains="true"/>
 </widget>

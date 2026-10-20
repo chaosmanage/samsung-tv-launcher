@@ -21,7 +21,7 @@ const STUB = (opts) => `
     application: {
       launch: function(id, ok, fail){ log.launches.push(id);
         setTimeout(function(){ (opts.failIds||[]).indexOf(id) >= 0 || !apps.some(function(a){return a.id===id;}) ? fail(err('NotFoundError','No such app: '+id)) : ok(); }, 5); },
-      getAppsInfo: function(ok){ setTimeout(function(){ ok(apps); }, 1); },
+      getAppsInfo: function(ok){ log.appsInfo = (log.appsInfo||0) + 1; setTimeout(function(){ ok(apps); }, 1); },
       getCurrentApplication: function(){ return { exit: function(){ log.exit++; }, hide: function(){ log.exit++; } }; }
     },
     tvinputdevice: { registerKeyBatch: function(k){ log.keys = k.slice(); }, registerKey: function(k){ log.keys.push(k); } },
@@ -187,6 +187,67 @@ const L = 37, U = 38, R = 39, D = 40, OK = 13, BACK = 10009, BLUE = 406;
   await key(page, R); await key(page, OK); await wait(30);
   check('runs without tizen object (preview mode), no errors', errors.length === 0 && await focused(page) === 1, JSON.stringify(errors));
   await page.close();
+
+  /* ---- 12. multitasking: hide / resume (Autorun Last App path) ---- */
+  const setHidden = (page, h) => page.evaluate(h => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => h ? 'hidden' : 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, h);
+  ({ page, errors } = await open(browser, { hdmi: [{ type: 'HDMI', number: 2 }] }));
+  await key(page, R); await key(page, R); // focus Netflix
+  await key(page, 49); await wait(60);     // HDMI in TV mode
+  check('pre-resume: HDMI picture showing', await page.evaluate(() => document.body.classList.contains('tvmode')));
+  const infoBefore = await page.evaluate(() => __log.appsInfo);
+  await page.evaluate(() => { document.getElementById('time').textContent = 'stale'; });
+  await setHidden(page, true); await wait(20);
+  const hid = await page.evaluate(() => ({ hide: __log.hide, tv: document.body.classList.contains('tvmode') }));
+  check('on hide: HDMI window hidden and TV mode left', hid.hide === 1 && !hid.tv, JSON.stringify(hid));
+  await setHidden(page, false); await wait(60);
+  const res = await page.evaluate(() => ({ info: __log.appsInfo, time: document.getElementById('time').textContent,
+    home: getComputedStyle(document.getElementById('home')).visibility, ov: document.getElementById('overlay').classList.contains('hidden'),
+    toast: document.getElementById('toast').classList.contains('hidden'), hint: document.getElementById('hdmiHint').classList.contains('hidden'),
+    focusedCount: document.querySelectorAll('.tile.focused').length }));
+  check('on resume: installed apps re-read', res.info === infoBefore + 1, JSON.stringify(res));
+  check('on resume: clock refreshed', res.time !== 'stale' && /\d:\d\d (AM|PM)/.test(res.time), res.time);
+  check('on resume: home visible, no pop-up/toast/HDMI hint', res.home === 'visible' && res.ov && res.toast && res.hint, JSON.stringify(res));
+  check('on resume: exactly one tile focused (last used = HDMI)', res.focusedCount === 1 && await focused(page) === 0);
+  await page.evaluate(() => __log.launches = []);
+  await key(page, R); await key(page, R); await key(page, OK); await wait(50);
+  check('after resume: navigation + launch work', (await page.evaluate(() => __log.launches))[0] === 'org.tizen.netflix-app');
+  // pop-up + toast open while hidden
+  await wait(1300);
+  await key(page, 55); await wait(80); await key(page, BLUE); await wait(50);
+  await setHidden(page, true); await setHidden(page, false); await wait(60);
+  check('resume closes open pop-up', await page.$eval('#overlay', e => e.classList.contains('hidden')));
+  check('resume clears error toast', await page.$eval('#toast', e => e.classList.contains('hidden')));
+  await key(page, R); check('keys go to grid after resume (focus kept on Sony LIV, RIGHT -> Internet)', await focused(page) === 7);
+  for (let i = 0; i < 2; i++) await key(page, BACK);
+  check('BACK after resume still does not exit', await page.evaluate(() => __log.exit) === 0);
+  // repeated hide/resume cycles stay clean
+  for (let i = 0; i < 5; i++) { await setHidden(page, true); await setHidden(page, false); }
+  await wait(50);
+  check('5 hide/resume cycles: one focused tile, home mode', await page.evaluate(() => document.querySelectorAll('.tile.focused').length) === 1);
+  check('zero console errors (resume run)', errors.length === 0, JSON.stringify(errors));
+  await page.close();
+
+  // RESUME_FOCUS = 'first'
+  ({ page, errors } = await open(browser, {}));
+  await page.evaluate(() => { window.RESUME_FOCUS = 'first'; });
+  await key(page, L); await key(page, L);
+  await setHidden(page, true); await setHidden(page, false); await wait(40);
+  check("RESUME_FOCUS='first' returns focus to tile 1", await focused(page) === 0);
+  check('zero console errors (resume-first run)', errors.length === 0, JSON.stringify(errors));
+  await page.close();
+
+  /* ---- 13. config.xml multitasking settings ---- */
+  const cfg = require('fs').readFileSync(path.join(OUT, 'config.xml'), 'utf8');
+  check('config: background-support="enable"', /background-support="enable"/.test(cfg));
+  check('config: hwkey-event="enable" kept', /hwkey-event="enable"/.test(cfg));
+  check('config: app-control with reload="disable" + eden_resume',
+    /<tizen:app-control>[\s\S]*<tizen:src name="index.html" reload="disable"\/>[\s\S]*operation\/eden_resume"\/>[\s\S]*<\/tizen:app-control>/.test(cfg));
+  check('config: multitasking.support metadata = true', /<tizen:metadata key="http:\/\/samsung\.com\/tv\/metadata\/multitasking\.support" value="true"\/>/.test(cfg));
+  check('config: version 1.1.0', /<widget[^>]*version="1\.1\.0"/.test(cfg));
 
   await browser.close();
   console.log(results.join('\n'));

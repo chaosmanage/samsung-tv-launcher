@@ -42,5 +42,25 @@ PASS Netflix falls back through all candidate IDs
 PASS then shows error toast
 PASS zero console errors (fail run; warnings allowed)
 PASS runs without tizen object (preview mode), no errors
+PASS pre-resume: HDMI picture showing
+PASS on hide: HDMI window hidden and TV mode left
+PASS on resume: installed apps re-read
+PASS on resume: clock refreshed
+PASS on resume: home visible, no pop-up/toast/HDMI hint
+PASS on resume: exactly one tile focused (last used = HDMI)
+PASS after resume: navigation + launch work
+PASS resume closes open pop-up
+PASS resume clears error toast
+PASS keys go to grid after resume (focus kept on Sony LIV, RIGHT -> Internet)
+PASS BACK after resume still does not exit
+PASS 5 hide/resume cycles: one focused tile, home mode
+PASS zero console errors (resume run)
+PASS RESUME_FOCUS='first' returns focus to tile 1
+PASS zero console errors (resume-first run)
+PASS config: background-support="enable"
+PASS config: hwkey-event="enable" kept
+PASS config: app-control with reload="disable" + eden_resume
+PASS config: multitasking.support metadata = true
+PASS config: version 1.1.0
 
-44 passed, 0 failed
+64 passed, 0 failed

@@ -82,3 +82,10 @@ var HDMI_CONFIG = {
   order: ['tvwindow', 'native'],
   nativeApps: ['com.samsung.tv.coba.source', 'org.tizen.tv-viewer', 'org.tizen.SMSourceAPP']
 };
+
+/*
+ * What to focus when the TV brings Clean Home back (resume / Autorun Last App).
+ *   'last'  : the tile you used last (default)
+ *   'first' : always tile 1 (HDMI)
+ */
+var RESUME_FOCUS = 'last';

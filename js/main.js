@@ -336,8 +336,31 @@
 
   /* ---------- start ---------- */
   document.addEventListener('keydown', onKey);
+  /* ---------- multitasking: hide / resume ----------
+   * Samsung pauses JavaScript while the app is hidden (another app, input
+   * change, or TV off with Instant On) and fires 'visibilitychange' on both
+   * hide and resume. With reload="disable" + eden_resume in config.xml the
+   * page is kept, so we must tidy up ourselves.                           */
+  function resetUi() {
+    if (mode === 'tv') exitTvMode();
+    if (mode === 'overlay') closeOverlay();
+    clearTimeout(toastTimer); toastEl.classList.add('hidden');
+    clearTimeout(hintTimer); hdmiHint.classList.add('hidden');
+    tiles.forEach(function (el) { el.classList.remove('launching'); });
+    busyUntil = 0;
+    mode = 'home';
+  }
+  function onHidden() { resetUi(); }
+  function onResumed() {
+    resetUi();
+    var target = (typeof RESUME_FOCUS !== 'undefined' && RESUME_FOCUS === 'first') ? 0 : focus;
+    for (var i = 0; i < tiles.length; i++) tiles[i].classList.remove('focused');
+    setFocus(Math.max(0, Math.min(target, tiles.length - 1)));
+    tick();
+    loadInstalled();
+  }
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { tick(); loadInstalled(); }
+    if (document.hidden) onHidden(); else onResumed();
   });
   registerKeys();
   build();

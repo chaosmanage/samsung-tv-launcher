@@ -3,7 +3,6 @@
 body { font-family: 'Segoe UI', 'Noto Sans', 'DejaVu Sans', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1d2330; }
 h1 { font-size: 22pt; color: #12306b; border-bottom: 3px solid #2f6fdb; padding-bottom: 6px; margin-top: 0; }
 h2 { font-size: 15pt; color: #fff; background: #2f6fdb; padding: 6px 12px; border-radius: 6px; margin-top: 26px; break-after: avoid; }
-
 h3 { break-after: avoid; font-size: 12pt; color: #12306b; margin-top: 18px; }
 hr { display: none; }
 table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 10px 0; }
@@ -81,8 +80,8 @@ match, go to <strong>Part K – Troubleshooting</strong>.</p>
 </tr>
 <tr>
 <td>J</td>
-<td>Put Clean Home first on the TV's home row</td>
-<td>2 min</td>
+<td>Updates, home row, and opening Clean Home at power-on</td>
+<td>5 min</td>
 </tr>
 <tr>
 <td>K</td>
@@ -493,7 +492,29 @@ YouTube, Netflix, ZEE5, Prime Video, JioHotstar, Sony LIV, Internet</strong>).
 Use the arrows and <strong>OK</strong> to try it. 🎉</p>
 <p>You can now close Tizen Studio. Clean Home stays installed on the TV.</p>
 <hr />
-<h2>Part J – Put Clean Home first on the TV's home row</h2>
+<h2>Part J – Updates, home row, and opening Clean Home at power-on</h2>
+<h3>J1. Installing an update (e.g. version 1.1.0)</h3>
+<p>Use the <strong>same PC, the same Tizen Studio and the same <code>MyTV</code> certificate</strong>.
+Don't make a new certificate. If you do, the TV treats it as a different
+app and refuses to update it (error <code>118, -12</code>, see Part K).</p>
+<ol>
+<li>Turn the TV on. Check <strong>Home → Apps → App Settings</strong> still says
+   <strong>Settings (DEVELOP MODE)</strong>. If not, redo <strong>Part C</strong> (use <code>ipconfig</code> again
+   in case the PC's IP changed).</li>
+<li>Get the new files: repeat <strong>Part A steps 3–9</strong> (Download ZIP → Extract All
+   to <strong><code>C:\TV</code></strong>). When Windows asks about files that already exist, choose
+   <strong>Replace the files in the destination</strong>.</li>
+<li>Open <strong>Tizen Studio</strong> (Part F step 1). In <strong>Project Explorer</strong>, right-click
+   <strong>CleanHome</strong> → <strong>Refresh</strong>.</li>
+<li><strong>Tools → Device Manager</strong>: make sure the TV shows as connected (Part G).
+   If it isn't listed, open <strong>Remote Device Manager</strong> and switch <strong>Connection</strong>
+   for MyTV to <strong>On</strong> again.</li>
+<li>Right-click <strong>CleanHome</strong> → <strong>Run As</strong> → <strong>Tizen Web Application</strong>.</li>
+</ol>
+<p><strong>What you should see:</strong> the Console ends with <em>"… install completed"</em> and
+Clean Home opens on the TV. The new version replaces the old one
+automatically; your app row position stays the same.</p>
+<h3>J2. Put Clean Home first on the TV's home row</h3>
 <ol>
 <li>Press <strong>Home</strong> (🏠) → <strong>Apps</strong> → scroll to the bottom → <strong>App Settings</strong>
    (same screen as Part C step 3).</li>
@@ -503,8 +524,44 @@ Use the arrows and <strong>OK</strong> to try it. 🎉</p>
    <strong>Down</strong>, choose <strong>Move</strong>, press <strong>Left</strong> until it's in the <strong>first
    position</strong>, and press <strong>OK</strong>.</li>
 </ol>
-<p><strong>What you should see:</strong> from now on, <strong>Home → OK</strong> (or Home, then the first
-app) opens Clean Home.</p>
+<p><strong>What you should see:</strong> <strong>Home → OK</strong> (Home, then the first app) opens Clean Home.</p>
+<blockquote>
+<p><strong>The Home button can't be changed.</strong> Samsung doesn't let any app take
+over the 🏠 button; it always opens Samsung's own menu. That's why Clean
+Home should sit in the <strong>first slot</strong>: Home → OK is the quickest way back.</p>
+</blockquote>
+<h3>J3. Make the TV open Clean Home when you switch it on</h3>
+<p>Version <strong>1.1.0</strong> and later support Samsung's <strong>"Autorun Last App"</strong>.</p>
+<ol>
+<li>Press <strong>Home</strong> (🏠) → <strong>Settings</strong> (⚙) → <strong>All Settings</strong> →
+   <strong>General &amp; Privacy</strong> → <strong>Start Screen Options</strong>.</li>
+<li>Switch <strong>Start with Smart Hub Home</strong> to <strong>Off</strong>.</li>
+<li>Switch <strong>Autorun Last App</strong> to <strong>On</strong>.</li>
+<li>Leave the other options (Multi View …) as they are.</li>
+</ol>
+<p><strong>What you should see:</strong> both switches in the positions above. To test:
+open Clean Home, turn the TV off with the remote's Power button, wait 10
+seconds, turn it on. Clean Home should appear on its own, showing the tiles
+with the current time.</p>
+<h3>J4. How this works (please read)</h3>
+<ul>
+<li>The TV reopens <strong>the last app you used</strong>, not "always Clean Home". If you
+  were watching Netflix when you switched off, the TV reopens <strong>Netflix</strong>.
+  <strong>Habit:</strong> before turning the TV off, press <strong>Home → OK</strong> to open Clean Home, then switch off.</li>
+<li>If you were on <strong>HDMI</strong> inside Clean Home when you switched off, Clean Home
+  comes back on its <strong>home grid</strong> (not the HDMI picture). Press <strong>1</strong> or OK on
+  the HDMI tile to go back.</li>
+<li>It works best with normal <strong>remote power off</strong> (the TV is really in
+  standby). After a <strong>power cut, unplugging the TV</strong>, or a <strong>software update</strong>, the
+  TV does a full restart and may show Samsung's home screen or the last
+  input instead. Just open Clean Home once (Home → OK) and it'll be back next time.</li>
+<li>Samsung says Autorun Last App <strong>may not work with every app</strong>, and
+  multitasking can be missing on some low-memory models. If it doesn't work
+  on your TV, Home → OK (J2) is the fallback.</li>
+</ul>
+<p>Sources: Samsung Support – <a href="https://www.samsung.com/au/support/tv-audio-video/use-autorun-start-screen-options-on-your-samsung-tv/">Use Autorun Start Screen Options</a>
+(2023–2024 models: Settings &gt; All Settings &gt; General &amp; Privacy &gt; Start Screen Options);
+Samsung Developer – <a href="https://developer.samsung.com/smarttv/develop/guides/fundamentals/multitasking.html">Multitasking</a>.</p>
 <p>Tip: for extra privacy, also go to <strong>Settings → All Settings → General &amp; Privacy
 → Terms &amp; Privacy</strong> and switch off <strong>Internet Based Advertisement</strong> and
 <strong>Viewing Information Services</strong>.</p>
@@ -583,6 +640,16 @@ app) opens Clean Home.</p>
 <td>Package Manager won't open</td>
 <td>Damaged first-run settings</td>
 <td>Close it, delete the folder <code>C:\Users\&lt;your name&gt;\.package-manager</code>, and run <code>C:\tizen-studio\package-manager\package-manager.exe</code> again.</td>
+</tr>
+<tr>
+<td>TV doesn't open Clean Home when switched on</td>
+<td>Another app was used last; Start Screen Options not set; full restart (power cut/unplug/update); or Clean Home older than 1.1.0</td>
+<td>Check Part J3 settings. Open Clean Home (Home → OK) <strong>before</strong> switching off. Make sure 1.1.0 is installed (Part J1). After a power cut, open it once by hand.</td>
+</tr>
+<tr>
+<td>After an update, the old version still shows</td>
+<td>Tizen Studio used old files</td>
+<td>In Tizen Studio right-click CleanHome → <strong>Refresh</strong>, then Run As again (Part J1). Check <code>C:\TV\samsung-tv-launcher-main\config.xml</code> says <code>version="1.1.0"</code> (open with Notepad).</td>
 </tr>
 <tr>
 <td>A Clean Home tile says <em>"Couldn't open …"</em></td>
