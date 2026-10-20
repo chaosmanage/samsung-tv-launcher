@@ -31,7 +31,7 @@ Weather for **Wakad, Pune** is shown next to the clock via Open-Meteo (no API ke
 
 Daily Bing photo (default on): loads today’s Bing homepage image as a **live URL** — nothing is saved to the TV. Falls back to the bundled wallpaper set offline. See [docs/NO-DEVICE-BLOAT.md](docs/NO-DEVICE-BLOAT.md).
 
-Samsung Home tile opens Smart Hub via `com.samsung.tv.csfs`. HDMI switches to HDMI 1 via `tvwindow.setSource` (fallback: `org.tizen.SMSourceAPP` / `org.tizen.tv-viewer`).
+Samsung Home tile opens Smart Hub via `com.samsung.tv.csfs` (then menu/edenview). HDMI launches `org.tizen.tv-viewer` (verified STATUS_FOCUS on UA43DU7660); Art Mode is not available on Crystal UHD and has been removed.
 
 Remote: **arrows, OK/Enter, Back only** — no colour or number key dependence.
 

@@ -118,11 +118,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .native-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .native-icon.has-native-icon>span{visibility:hidden}
 .tile .mark{position:absolute;left:84px;top:34px;opacity:.92;transition:opacity 160ms linear,transform var(--t) var(--ease)}
-.tile .mark.bundled-icon{left:50%;top:18px;margin-left:-54px;width:108px;height:108px;opacity:1}
-.a-icons .tile .mark.bundled-icon{margin-left:-68px;top:40px;width:136px;height:136px}
-.tile .mark.bundled-icon img{position:relative;inset:auto;width:100%;height:100%;object-fit:contain;display:block;border-radius:0}
-.tile.is-focus .mark.bundled-icon,.tile.is-lifted .mark.bundled-icon{transform:translateY(-4px) scale(1.05)}
-.tile .label{position:absolute;left:4px;right:4px;top:132px;text-align:center;font-size:34px;line-height:40px;letter-spacing:-.6px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9;transition:opacity 160ms linear}
+.tile .mark.bundled-icon{left:50%;top:12px;margin-left:-56px;width:112px!important;height:112px!important;opacity:1;border-radius:26px;overflow:hidden;background:transparent!important;box-shadow:0 6px 18px rgba(0,0,0,.28)!important;transform-origin:50% 0}
+.a-icons .tile .mark.bundled-icon{margin-left:-44px!important;top:28px;width:88px!important;height:88px!important;border-radius:22px}
+.tile .mark.bundled-icon img{position:relative;inset:auto;width:100%;height:100%;object-fit:cover;display:block;border-radius:26px;background:transparent!important}
+.tile.is-focus .mark.bundled-icon,.tile.is-lifted .mark.bundled-icon{transform:translateY(-4px) scale(1.04)}
+.tile .label{position:absolute;left:8px;right:8px;top:144px;height:40px;text-align:center;font-size:30px;line-height:36px;letter-spacing:-.2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:1;transition:opacity 160ms linear;pointer-events:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);transform:none!important}
+.tile .label .label-ink{display:inline;text-shadow:inherit;filter:none;-webkit-text-stroke:0}
 .tile .t-name{position:absolute;left:12px;right:12px;top:72px;text-align:center;font-size:40px;line-height:56px;letter-spacing:-1px;font-weight:600;white-space:nowrap;overflow:hidden;opacity:.84;transition:opacity 160ms linear}
 .tile.is-focus .mark,.tile.is-focus .label,.tile.is-focus .t-name,.tile.is-lifted .mark,.tile.is-lifted .label,.tile.is-lifted .t-name{opacity:1}
 .tile.is-focus .mark,.tile.is-lifted .mark{transform:translateY(-3px) scale(1.04)}
@@ -611,7 +612,28 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .caption .wx-ico{width:34px;height:34px;flex:none;opacity:.96;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))}
 .caption .wx-temp{font-weight:800;font-size:36px}
 .caption .wx-cond{opacity:.9;font-weight:700;font-size:26px}
-.caption .wx-place{opacity:.8;font-size:24px;font-weight:600}
-.mark.bundled-icon{background:none;box-shadow:none;border-radius:0;overflow:visible}
+.caption .wx-place{opacity:.85;font-size:26px;font-weight:600;flex-basis:100%;white-space:nowrap;margin-top:2px}
+.caption .weather{flex-wrap:wrap;row-gap:2px;white-space:nowrap;overflow:visible;max-width:none}
+.caption{width:max-content;max-width:1200px}
+.mark.bundled-icon{background:transparent!important;border-radius:23%;overflow:hidden}
+.mark.bundled-icon img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;background:transparent!important}
 .mark.bundled-icon.monogram{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border-radius:28px}
-.mat-img.is-live-glass{filter:blur(36px) saturate(1.08) brightness(.92);-webkit-filter:blur(36px) saturate(1.08) brightness(.92)}
+
+/* v1.2.3: one live wallpaper everywhere. Glass layers blur the SAME image via CSS. */
+.sheet-bg.is-live-glass{filter:blur(44px) saturate(1.05) brightness(.72);-webkit-filter:blur(44px) saturate(1.05) brightness(.72);transform:scale(1.08)}
+.ph-field-img.is-live-glass{filter:blur(32px) saturate(1.06) brightness(.9);-webkit-filter:blur(32px) saturate(1.06) brightness(.9)}
+/* v1.2.3: All apps grid. Fixed 96px icon, label 18px below it, status line under the label. No overlap at any focus scale. */
+.gt .mark{left:50%!important;top:14px!important;margin-left:-48px;width:96px!important;height:96px!important;transform-origin:50% 0}
+.gt .mark.bundled-icon{border-radius:22px;overflow:hidden;background:transparent!important}
+.gt .mark img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.gt.is-focus .mark{transform:scale(1.04)}
+.gt .label{top:128px;height:40px;font-size:30px;line-height:40px;letter-spacing:-.3px}
+.gt .state{top:170px;height:34px;font-size:26px;line-height:34px}
+
+/* v1.2.3 CleanFrame glass: live wallpaper, light blur, CleanFrame scrim + veil (no milky frost). */
+.mat-img.is-live-glass{filter:blur(18px) saturate(1.1) brightness(.82);-webkit-filter:blur(18px) saturate(1.1) brightness(.82);transform:scale(1.02);transform-origin:960px 792px}
+/* Single-ink marks: same white as the clock/labels, no tiles behind them. */
+.tile .mark:not(.bundled-icon),.gt .mark:not(.bundled-icon),.er .mark:not(.bundled-icon){color:var(--ink,#fff);background:none}
+.mat-img.is-live-glass{filter:blur(16px) saturate(1.08) brightness(.9);-webkit-filter:blur(16px) saturate(1.08) brightness(.9)}
+.bg-photo .mat-scrim{display:none}
+.bg-photo .mat-veil,.bg-photo.tone-light .mat-veil{background:rgba(8,14,18,.12)}

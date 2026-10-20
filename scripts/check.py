@@ -38,25 +38,29 @@ for wall in walls:
     for field in ['src', 'thumb']:
         assert (app / wall[field]).is_file(), 'Missing wallpaper: ' + wall[field]
     wall_id = wall['id']
-    for suffix in ['study-soft', 'field-blur', 'field-frost', 'field-clear']:
-        assert (app / ('assets/materials/' + wall_id + '-' + suffix + '.jpg')).is_file(), 'Missing registered material: ' + wall_id + '/' + suffix
-    assert (app / ('assets/wallpapers/' + wall_id + '-panel.jpg')).is_file(), 'Missing panel backdrop: ' + wall_id
+    assert not (app / ('assets/wallpapers/' + wall_id + '-panel.jpg')).exists(), 'Stale pre-blurred panel: ' + wall_id
 # Streaming tiles use the TV's installed iconPath at runtime; only utility outline SVGs are required.
-for icon in ['art', 'apps', 'settings', 'home']:
-    assert (app / ('assets/icons/' + icon + '.svg')).is_file(), 'Missing icon: ' + icon
+for icon in ['apps', 'settings', 'home']:
+    assert (app / ('assets/icons/' + icon + '.svg')).is_file(), 'Missing util icon: ' + icon
 # device.js must use Kunal's app identity and confirmed app IDs
 device = (app / 'device.js').read_text()
 assert "SELF = 'KsHome0001.CleanHome'" in device
 for app_id in ['9Ur5IzDKqV.TizenYouTube', 'org.tizen.netflix-app', 'wKDM33Rods.ZEE5',
                'org.tizen.primevideo', 'fiZNCxMH9Y.Hotstar', 'EUKHUxrGQA.SonyLIV',
-               'com.samsung.tv.knox-browser']:
+               'org.tizen.browser']:
     assert app_id in device, 'Missing app id in device.js: ' + app_id
 main = (app / 'main.js').read_text()
-assert "id: 'hdmi'" in main and "id: 'samsunghome'" in main
+assert "id: 'hdmi'" in main and "id: 'samsunghome'" not in main and "utils() { return ['samsunghome', 'apps', 'settings']; }" in main, 'Samsung Home must be a header control, not a dock app'
+for f in ['mono/hdmi.png', 'mono/zee5.png', 'mono/sonyliv.png', 'hotstar.svg', 'browser.svg', 'youtube.svg', 'netflix.svg', 'primevideo.svg', 'tizen-placeholder-ref.png']:
+    assert (app / 'assets/icons' / f).is_file(), 'Missing dock mark: ' + f
 assert 'Wakad, Pune' in main
 assert 'api.open-meteo.com' in main
 for dock_icon in ['hdmi','youtube','netflix','zee5','primevideo','hotstar','sonyliv','browser','samsunghome']:
-    assert (app / ('assets/icons/dock/' + dock_icon + '.svg')).is_file(), 'Missing dock icon: ' + dock_icon
-assert 'useAsHome' in main
-assert "SMSourceAPP" in (app / 'device.js').read_text()
+    assert (app / ('assets/icons/dock/' + dock_icon + '.png')).is_file(), 'Missing dock PNG icon: ' + dock_icon
+assert 'enforceHomePreference' not in main
+assert "org.tizen.tv-viewer" in (app / 'device.js').read_text()
 print('Widget identity, version and bundled resources are valid.')
+
+_js = (app / 'main.js').read_text()
+assert 'assets/materials' not in _js and '-panel.jpg' not in _js, 'Stock pre-blurred wallpaper materials must not be used'
+assert 'function applyWallpaperEverywhere' in _js, 'Single wallpaper source missing'
