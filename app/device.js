@@ -19,7 +19,7 @@
   /* Verified on UA43DU7660 with aul STATUS_FOCUS: org.tizen.tv-viewer (and sub1).
      SMSourceAPP only reached STATUS_LAUNCHING. */
   var HDMI_NATIVE = ['org.tizen.tv-viewer', 'org.tizen.tv-viewer-sub1', 'org.tizen.SMSourceAPP'];
-  var SAMSUNG_HOME = ['com.samsung.tv.csfs', 'org.tizen.menu', 'com.samsung.tv.coba.edenview'];
+  var SAMSUNG_HOME = ['com.samsung.tv.csfs', 'com.samsung.tv.coba.newhome', 'com.samsung.tv.coba.edenview'];
   function api() { return window.tizen && window.tizen.application; }
   function unavailable(done) {
     done({ message: 'Open Clean Home on the TV to use this control.', detail: 'The web preview cannot control the TV.' });

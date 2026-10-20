@@ -41,3 +41,12 @@ Times in Asia/Calcutta (IST). TV: UA43DU7660KLXL.
 | Recovery launch does not hand off | PASS | home-handoff-skip reason not-home-launch |
 | `0 kill` as a restart method | N/A | TV returns "General error [-1]"; used the in-app exit (real process exit) instead |
 | Real remote Home with toggle Off → Samsung Home | PENDING | needs Kunal's press |
+
+## Hotfix 2 (20 Oct 2026, 20:45 IST)
+| Test | Result | Evidence |
+|---|---|---|
+| Kunal real Home press, toggle Off, previous build | FAIL | 20:37:44 focus-only smarthub_key event; handoff not evaluated on focus |
+| Replay of the logged requests through the new code (9 cases) | PASS | `node scripts/_replay-home.js`: Home key on focus and visible hand off once; stale/app-row/sdb/recovery/On don't |
+| New build installed and running | PASS | 20:44 pid 2104 STATUS_FOCUS; prefs found, dock 9 incl. Spotify, useAsHome false |
+| Real Home press with toggle Off (new build) | PENDING | Kunal |
+| TV Plus key reaches Clean Home | FAIL (platform) | 20:37:16 only `blur`, Samsung popup "You have disabled Samsung TV Plus"; no keydown |

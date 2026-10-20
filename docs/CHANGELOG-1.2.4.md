@@ -47,3 +47,15 @@
 - **Prefs no longer reset.** Boot never writes defaults over storage when the read comes back empty; it retries the read
   instead. Every save is mirrored to `cleanhome.home.v1.bak` / `cleanhome.homepref.bak` and read back, and saves are synchronous localStorage writes.
 - Debug-only commands: `adddock:<appId>`, `exit`. Removed `simhome`.
+
+## 1.2.4 hotfix 2 (20 Oct 2026, 20:45 IST): Home key while Clean Home is already running
+- Kunal's real test (20:37:44): with Clean Home in front, a Home press arrives ONLY as a window `focus` event whose
+  requested app control is the new `entry_point=smarthub_key` request. The handoff rule now runs on every entry hook
+  (start, appcontrol, focus, visible, webkitvisible, pageshow, resume) with a fresh `getRequestedAppControl()`.
+- One press = one handoff: requests are de-duplicated by `__K_APP_LAUNCH_START_TIME` (or the full request), so coming
+  back from Samsung Home with the same stale request never bounces, and app-row/app-list launches always show Clean Home.
+- Samsung Home launches before logging/rendering. On a cold Home-key launch it runs before the first paint.
+  Fallback chain: com.samsung.tv.csfs → com.samsung.tv.coba.newhome → coba.edenview. org.tizen.menu (TV settings) was removed from this chain.
+- `scripts/_replay-home.js` replays the logged real requests through the shipped code (9/9 PASS).
+- TV Plus key: the system handles it before apps see it. Pressing it showed Samsung's "You have disabled Samsung TV Plus"
+  popup, and Clean Home got only a `blur` (no key event). Samsung support says app buttons can't be reprogrammed.

@@ -2220,18 +2220,30 @@
     if (/\/operation\/main$/i.test(op)) return true;
     return false;
   }
+  /* One Home press = one launch request. The TV stamps each request with __K_APP_LAUNCH_START_TIME; a later
+     focus/visible event that still sees the same request (e.g. coming back from Samsung Home) must not bounce. */
+  var lastLaunchKey = null;
+  function launchKey(info) {
+    var d = (info && info.data) || [], i;
+    for (i = 0; i < d.length; i++) if (d[i].indexOf('__K_APP_LAUNCH_START_TIME=') === 0) return d[i];
+    return (info.caller || '') + '|' + (info.op || '') + '|' + d.join('|');
+  }
+  /* Run on EVERY entry hook with a fresh getRequestedAppControl(). Returns true when it handed off. */
   function maybeHandOffHome(hook, forced) {
+    var info = forced || launchInfo(), key = launchKey(info);
+    if (!forced) {
+      if (key === lastLaunchKey) return false;   /* same request already judged: stale, never re-used */
+      lastLaunchKey = key;
+    }
     if (useAsHome()) return false;
-    var info = forced || launchInfo();
     if (!isHomeTriggeredLaunch(info)) {
-      chDebug('home-handoff-skip', { hook: hook, reason: 'not-home-launch', info: info, useAsHome: useAsHome() });
+      chDebug('home-handoff-skip', { hook: hook, reason: 'not-home-launch', key: key });
       return false;
     }
-    chDebug('home-handoff', { hook: hook, info: info });
-    try {
-      /* Do not exit: Clean Home is the registered Home app and an exit causes a recovery relaunch. */
-      FrameDevice.home(function (err) { chDebug('home-handoff-done', { err: err ? (err.message || String(err)) : null }); });
-    } catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); }
+    /* Launch Samsung Home first, log afterwards: it should feel instant. Do not exit (recovery relaunch). */
+    try { FrameDevice.home(function (err) { chDebug('home-handoff-done', { hook: hook, err: err ? (err.message || String(err)) : null }); }); }
+    catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); }
+    chDebug('home-handoff', { hook: hook, key: key });
     return true;
   }
 
@@ -2244,19 +2256,26 @@
         o.caller = rac.callerAppId || '';
         o.op = rac.appControl && rac.appControl.operation || '';
         o.uri = rac.appControl && rac.appControl.uri || '';
-        o.data = (rac.appControl && rac.appControl.data || []).slice(0, 12).map(function (d) { return d.key + '=' + String(d.value).slice(0, 60); });
+        o.data = (rac.appControl && rac.appControl.data || []).slice(0, 16).map(function (d) { return d.key + '=' + String(d.value).slice(0, 60); });
       }
     } catch (e) { o.err = String(e).slice(0, 80); }
     return o;
   }
-  window.addEventListener('appcontrol', function () { chDebug('launch', { hook: 'appcontrol', info: launchInfo() }); if (maybeHandOffHome('appcontrol')) return; resetToMain('appcontrol'); });
-  document.addEventListener('webkitvisibilitychange', function () { if (!document.webkitHidden) { chDebug('launch', { hook: 'webkitvisible', info: launchInfo() }); resetToMain('webkitvisible'); } });
-  window.addEventListener('pageshow', function () { resetToMain('pageshow'); });
+  /* Single entry point for all "we are (back) on screen" signals. */
+  function onEntry(hook, extra) {
+    if (maybeHandOffHome(hook)) return true;
+    chDebug('launch', { hook: hook, extra: extra || null, info: launchInfo() });
+    return false;
+  }
+  window.addEventListener('appcontrol', function () { if (!onEntry('appcontrol')) resetToMain('appcontrol'); });
+  document.addEventListener('webkitvisibilitychange', function () { if (!document.webkitHidden && !onEntry('webkitvisible')) resetToMain('webkitvisible'); });
+  window.addEventListener('pageshow', function () { if (!onEntry('pageshow')) resetToMain('pageshow'); });
+  document.addEventListener('resume', function () { if (!onEntry('resume')) resetToMain('resume'); });
   var blurAt = 0;
   window.addEventListener('blur', function () { blurAt = Date.now(); chDebug('launch', { hook: 'blur' }); });
   window.addEventListener('focus', function () {
     var away = blurAt ? Date.now() - blurAt : 0; blurAt = 0;
-    chDebug('launch', { hook: 'focus', away: away, info: launchInfo() });
+    if (onEntry('focus', { away: away })) return;
     /* Long loss of focus = we were covered (Home overlay, another app). Come back to the main home. */
     if (away > 1000 && S.stack.length > 1) resetToMain('focus');
   });
@@ -2264,7 +2283,7 @@
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
     if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); }
-    else { release(); chDebug('launch', { hook: 'visible', info: launchInfo() }); if (!maybeHandOffHome('visible')) resetToMain('visible'); updateClock(); }
+    else { release(); if (!onEntry('visible')) resetToMain('visible'); updateClock(); }
   });
   window.addEventListener('resize', fit);
  
@@ -2426,8 +2445,8 @@
   initBing();
   refreshCatalog();
   setLook({}, { transient: true, startup: true });
+  onEntry('start');   /* cold Home-key launch with toggle Off: hand off before the first paint */
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
   if (!S.loadedFromStorage) setTimeout(function () { retryLoad(1); }, 1200);
-  chDebug('launch', { hook: 'start-ready', info: launchInfo(), useAsHome: useAsHome() });
-  maybeHandOffHome('start');
+  chDebug('launch', { hook: 'start-ready', useAsHome: useAsHome() });
 })();
