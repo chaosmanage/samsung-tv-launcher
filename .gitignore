@@ -1,0 +1,7 @@
+dist/
+*.wgt
+*.p12
+*.pem
+author.xml
+node_modules/
+.sign/

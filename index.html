@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080, user-scalable=no">
+<title>Clean Home</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="home">
+  <header>
+    <div class="greet"><div id="greeting">Welcome</div><div class="subtle">Your apps, no ads</div></div>
+    <div class="clock"><span id="time">--:--</span><span id="date">&nbsp;</span></div>
+  </header>
+
+  <section id="grid" class="grid" role="menu" aria-label="Apps"></section>
+
+  <div class="caption"><span id="capName">&nbsp;</span><span id="capSub">&nbsp;</span></div>
+
+  <footer>
+    <span><b class="k">OK</b>Open</span>
+    <span><b class="k">1&ndash;8</b>Quick open</span>
+    <span><b class="k dot yellow"></b>TV Source menu</span>
+    <span><b class="k dot blue"></b>App list &amp; IDs</span>
+  </footer>
+</main>
+
+<div id="overlay" class="overlay hidden" role="dialog" aria-modal="true">
+  <div class="panel">
+    <h2 id="ovTitle"></h2>
+    <div id="ovBody"></div>
+    <div id="ovButtons" class="ovbuttons"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden" role="status"></div>
+<div id="hdmiHint" class="hdmihint hidden"></div>
+
+<script src="js/apps.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
