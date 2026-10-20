@@ -1,4 +1,4 @@
-/* Clean Home — based on CleanFrame by Nathan Clark (MIT). Static materials, local preferences and public Tizen app controls. */
+/* Clean Home v1.2.1 — based on CleanFrame by Nathan Clark (MIT). Static materials, local preferences and public Tizen app controls. */
 (function () {
   'use strict';
 
@@ -141,17 +141,19 @@
       + (maskSupport ? '<span class="mk" style="' + st + ';-webkit-mask-image:url(' + ICONS + id + '.svg);mask-image:url(' + ICONS + id + '.svg)"></span>' : '<img alt="" src="' + ICONS + id + '.svg" style="' + st + '">') + '</span>';
   }
   function appMark(a, w, h, size) {
-    /* Prefer the TV's real installed-app icon when available. */
+    /* Uniform tile: same size, padding, radius and neutral backplate for every dock icon.
+       Official logos come from the TV iconPath; HDMI/Samsung Home use outline SVGs. */
+    var box = 'width:' + w + 'px;height:' + h + 'px';
     if (a.icon) {
-      return '<span class="mark native-icon has-native-icon" style="width:' + w + 'px;height:' + h + 'px">'
-        + '<img alt="" data-native-icon="true" src="' + esc(a.icon) + '" style="width:100%;height:100%;object-fit:contain;border-radius:18px"></span>';
+      return '<span class="mark tile-icon native-icon has-native-icon" style="' + box + '">'
+        + '<img alt="" data-native-icon="true" src="' + esc(a.icon) + '"></span>';
     }
     if (a.outline && SVG[a.outline]) {
-      return '<span class="mark outline-mark" style="width:' + w + 'px;height:' + h + 'px">' + icon(a.outline, 'outline-ico', true) + '</span>';
+      return '<span class="mark tile-icon outline-mark" style="' + box + '">' + icon(a.outline, 'outline-ico', true) + '</span>';
     }
     if (a.mark && (maskSupport || S.c.bg !== 'light')) return markHtml(a.brand || a.id, w, h, size);
     var words = a.name.split(/\s+/), letters = words[0].charAt(0) + (words.length > 1 ? words[1].charAt(0) : '');
-    return '<span class="mark monogram" style="width:' + w + 'px;height:' + h + 'px;font-size:' + Math.round(size * .65) + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
+    return '<span class="mark tile-icon monogram" style="' + box + ';font-size:' + Math.round(size * .55) + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
   }
   function smallMark(a) { return appMark(a, 56, 44, 36); }
   var measureCanvas = document.createElement('canvas'), measureContext = measureCanvas.getContext('2d'), measureSpan = document.createElement('span');
@@ -353,7 +355,8 @@
       focus: pick(modern.focus, LOOK_VALUES.focus, legacyList ? 'type' : 'glass'), material: pick(modern.material, LOOK_VALUES.material, 'soft'),
       font: pick(modern.font, LOOK_VALUES.font, 'manrope'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
       home: h, recent: recent, lastApp: h.indexOf(s.lastApp) >= 0 ? s.lastApp : h[0],
-      mode: pick(s.mode, MODES.map(function (m) { return m.id; }), 'fixed')
+      mode: pick(s.mode, MODES.map(function (m) { return m.id; }), 'fixed'),
+      dailyBing: s.dailyBing !== false
     };
   }
   function serialise(c) {
@@ -378,7 +381,7 @@
   }
   function clearSession() { S.undo = []; S.removedAt = {}; S.note = null; S.err = null; }
   function begin() { S.note = null; }
-  function next(home, recent) { var c = lookOf(S.c); c.home = home; c.recent = recent; c.lastApp = S.c.lastApp; c.mode = S.c.mode; return c; }
+  function next(home, recent) { var c = lookOf(S.c); c.home = home; c.recent = recent; c.lastApp = S.c.lastApp; c.mode = S.c.mode; c.dailyBing = S.c.dailyBing !== false; return c; }
   function snap() { return { home: S.c.home.slice(), recent: S.c.recent.slice() }; }
   function pushRecent(list, id) { return [id].concat(without(list, id)).slice(0, 5); }
   function write(c, label) {
@@ -456,17 +459,22 @@
   }
   function perform(title, run) {
     if (busy) return;
-    busy = true; busyTimer = setTimeout(release, 10000);
+    busy = true; busyTimer = setTimeout(release, 1200);
     run(function (err) {
       release();
-      if (err) message(title, err.message || 'The TV could not open this screen.', err.detail || '');
-      render(); syncRotation();
+      if (err) { message(title, err.message || 'The TV could not open this screen.', err.detail || ''); render(); }
     });
   }
   function launch(id) {
-    var a = app(id), c;
+    var a = app(id);
     if (!a || busy) return;
-    if (S.c.home.indexOf(id) >= 0) { c = next(S.c.home.slice(), S.c.recent.slice()); c.lastApp = id; write(c, 'Last app'); }
+    /* Defer preference write so it never blocks application.launch. */
+    if (S.c.home.indexOf(id) >= 0) {
+      setTimeout(function () {
+        var c = next(S.c.home.slice(), S.c.recent.slice());
+        c.lastApp = id; write(c, 'Last app');
+      }, 0);
+    }
     S.press = id; S.lastLaunch = a.name;
     if (a.kind === 'hdmi') { perform(a.name, function (done) { FrameDevice.hdmi(done); }); return; }
     if (a.kind === 'samsunghome') { perform(a.name, function (done) { FrameDevice.home(done); }); return; }
@@ -862,6 +870,7 @@
     if (t.group === 'background') return [
       { id: 'bg', title: 'Background type', items: options('bg', ['photo', 'light', 'dark']) },
       { id: 'wall', title: 'Wallpaper', items: [{ action: 'background.wallpaper', label: wall(S.c.wall).name, thumbnail: true, disabled: flat }] },
+      { id: 'daily', title: 'Daily photo', items: [{ action: 'background.daily', label: S.c.dailyBing ? 'Bing daily (on)' : 'Off — use chosen wallpaper', disabled: flat }], reason: flat ? 'Choose Photo to use the daily Bing photo.' : 'Loads today’s Bing photo as a live URL. Nothing is saved to the TV.' },
       { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }], reason: flat ? 'Choose Photo to use wallpaper and rotation.' : '' }
     ];
     if (t.group === 'layout') return [
@@ -923,6 +932,15 @@
     } else if (item.axis === 'mode') applyRotation(item.value);
     else if (item.axis) { patch[item.axis] = item.value; setLook(patch, { row: item.axis }); }
     else if (item.action === 'background.wallpaper') openWallpaper();
+    else if (item.action === 'background.daily') {
+      var cDaily = next(S.c.home.slice(), S.c.recent.slice());
+      cDaily.dailyBing = !S.c.dailyBing;
+      if (write(cDaily, 'Daily photo')) {
+        if (cDaily.dailyBing) fetchBingDaily(true);
+        else clearBingPhoto();
+        render();
+      }
+    }
     else if (item.action === 'background.rotation') openAppearance('rotation');
     else if (item.action === 'samsung.home') perform('Samsung Home', FrameDevice.home);
     else if (item.action === 'samsung.settings') perform('TV settings', FrameDevice.settings);
@@ -975,6 +993,10 @@
   /* ---------- Dispatch ---------- */
   function norm() { var t = top(), v = V[t.id]; if (v.norm) v.norm(t); }
   function press(k) {
+    if (FrameDevice.isHdmi && FrameDevice.isHdmi() && (k === 'back' || k === 'ok')) {
+      FrameDevice.exitHdmi(function () { render(); });
+      return;
+    }
     norm();
     var t = top();
     V[t.id].key(t, k);
@@ -1066,16 +1088,40 @@
   }
 
   function clockText() {
-    var d = new Date(), h = d.getHours() % 12 || 12, m = d.getMinutes();
-    return h + ':' + (m < 10 ? '0' : '') + m;
+    var d = new Date(), h24 = d.getHours(), h = h24 % 12 || 12, m = d.getMinutes();
+    return h + ':' + (m < 10 ? '0' : '') + m + ' ' + (h24 >= 12 ? 'PM' : 'AM');
   }
   function clockHtml() {
-    var text = clockText(), metrics = fontMetrics[homeFont()];
-    if (!metrics || !metrics.digitCell) return text;
-    return text.replace(/[0-9]/g, function (digit) { return '<span class="clock-digit">' + digit + '</span>'; });
+    var text = clockText(), metrics = fontMetrics[homeFont()], parts = text.split(' ');
+    var time = parts[0], ap = parts[1] || '';
+    if (metrics && metrics.digitCell) {
+      time = time.replace(/[0-9]/g, function (digit) { return '<span class="clock-digit">' + digit + '</span>'; });
+    }
+    return time + (ap ? '<span class="clock-ap">' + ap + '</span>' : '');
   }
-  /* Wakad, Pune weather via Open-Meteo (no API key). */
+  /* Wakad, Pune weather via Open-Meteo (no API key). In-memory only; localStorage holds one tiny overwrite entry. */
   var WX = { label: 'Wakad, Pune', lat: 18.60319, lon: 73.76255, last: 0, busy: false, data: null };
+  var WX_SVG = {
+    sun: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></svg>',
+    moon: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 3a9 9 0 1 0 5 14A7 7 0 0 1 16 3z"/></svg>',
+    partly: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3.2" fill="currentColor"/><path fill="currentColor" d="M8 18h10a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.2 1.6A3.2 3.2 0 0 0 8 18z" opacity=".95"/></svg>',
+    cloud: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 18h11a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 1.8A3.5 3.5 0 0 0 7 18z"/></svg>',
+    fog: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"><path d="M4 9h16M3 13h18M5 17h14"/></g></svg>',
+    rain: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 14h11a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 1.8A3.5 3.5 0 0 0 7 14z"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 17v3M13 17v3M17 17v3"/></g></svg>',
+    snow: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 14h11a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 1.8A3.5 3.5 0 0 0 7 14z"/><g fill="currentColor"><circle cx="9" cy="18" r="1.2"/><circle cx="13" cy="19.5" r="1.2"/><circle cx="17" cy="18" r="1.2"/></g></svg>',
+    storm: '<svg class="wx-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 13h11a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 1.8A3.5 3.5 0 0 0 7 13z"/><path fill="currentColor" d="M13 13l-3 5h3l-2 4 6-6h-3l2-3z"/></svg>'
+  };
+  function wxGlyph(code, isDay) {
+    if (code === 0 || code === 1) return isDay ? 'sun' : 'moon';
+    if (code === 2) return 'partly';
+    if (code === 3) return 'cloud';
+    if (code === 45 || code === 48) return 'fog';
+    if (code >= 51 && code <= 67) return 'rain';
+    if (code >= 71 && code <= 77) return 'snow';
+    if (code >= 80 && code <= 82) return 'rain';
+    if (code >= 95) return 'storm';
+    return 'cloud';
+  }
   function wxInfo(code, isDay) {
     if (code === 0 || code === 1) return isDay ? 'Clear' : 'Clear night';
     if (code === 2) return 'Partly cloudy';
@@ -1090,8 +1136,9 @@
   function weatherHtml() {
     var d = WX.data;
     if (!d || typeof d.temp !== 'number') return '';
-    var cond = wxInfo(d.code, d.isDay);
+    var cond = wxInfo(d.code, d.isDay), glyph = wxGlyph(d.code, d.isDay);
     return '<span class="weather" aria-label="' + esc(WX.label + ' weather') + '">'
+      + (WX_SVG[glyph] || '')
       + '<span class="wx-temp">' + Math.round(d.temp) + '°</span>'
       + (cond ? '<span class="wx-cond">' + esc(cond) + '</span>' : '')
       + '<span class="wx-place">' + esc(WX.label) + '</span></span>';
@@ -1110,8 +1157,9 @@
         if (!c || typeof c.temperature_2m !== 'number') return;
         WX.data = { temp: c.temperature_2m, code: c.weather_code, isDay: c.is_day === 1 };
         WX.last = Date.now();
+        /* Single overwrite entry — never append, never write image/files to the TV. */
         try { localStorage.setItem('cleanhome.wx', JSON.stringify({ d: WX.data, at: WX.last })); } catch (e) {}
-        render();
+        if (!busy) render();
       })['catch'](function () { if (!done) { done = true; clearTimeout(timer); WX.busy = false; } });
   }
   function initWeather() {
@@ -1121,6 +1169,54 @@
     } catch (e) {}
     fetchWeather(true);
     setInterval(function () { fetchWeather(false); }, 15 * 60000);
+  }
+  /* Daily Bing photo: live URL on <img>, never saved to TV disk. One localStorage overwrite. */
+  var BING = { busy: false, url: '', date: '', lastFail: 0 };
+  function todayKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+  function applyBingPhoto(url) {
+    if (!url || !IMG || !IMG.bg && !document.getElementById('photo')) return;
+    var photo = document.getElementById('photo');
+    if (!photo) return;
+    if (photo.getAttribute('data-bing') === url) return;
+    photo.setAttribute('data-bing', url);
+    photo.src = url;
+  }
+  function clearBingPhoto() {
+    var photo = document.getElementById('photo');
+    if (!photo) return;
+    photo.removeAttribute('data-bing');
+    if (S.c && S.c.wall) photo.src = WP + S.c.wall + '.jpg';
+  }
+  function fetchBingDaily(force) {
+    if (!S.c || !S.c.dailyBing || S.c.bg !== 'photo') return;
+    if (BING.busy) return;
+    if (!force && BING.date === todayKey() && BING.url) { applyBingPhoto(BING.url); return; }
+    if (!force && BING.lastFail && Date.now() - BING.lastFail < 15 * 60000) return;
+    if (typeof fetch !== 'function') return;
+    BING.busy = true;
+    var done = false, timer = setTimeout(function () { if (!done) { done = true; BING.busy = false; BING.lastFail = Date.now(); } }, 10000);
+    fetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-IN')
+      .then(function (r) { if (!r.ok) throw new Error('HTTP'); return r.json(); })
+      .then(function (j) {
+        if (done) return; done = true; clearTimeout(timer); BING.busy = false;
+        var img = j && j.images && j.images[0], path = img && (img.url || img.urlbase);
+        if (!path) { BING.lastFail = Date.now(); return; }
+        var url = path.indexOf('http') === 0 ? path : ('https://www.bing.com' + path);
+        BING.url = url; BING.date = todayKey(); BING.lastFail = 0;
+        try { localStorage.setItem('cleanhome.bing', JSON.stringify({ url: url, date: BING.date })); } catch (e) {}
+        applyBingPhoto(url);
+      })['catch'](function () { if (!done) { done = true; clearTimeout(timer); BING.busy = false; BING.lastFail = Date.now(); } });
+  }
+  function initBing() {
+    try {
+      var c = JSON.parse(localStorage.getItem('cleanhome.bing') || 'null');
+      if (c && c.url && c.date === todayKey()) { BING.url = c.url; BING.date = c.date; applyBingPhoto(c.url); }
+    } catch (e) {}
+    fetchBingDaily(true);
+    setInterval(function () { fetchBingDaily(false); }, 60 * 60000);
   }
   function renderCaption(t, hs) {
     var html = '<span class="clock">' + clockHtml() + '</span>' + weatherHtml();
@@ -1710,6 +1806,8 @@
     S.shown = { bg: look.bg, wall: look.wall, material: look.material, font: look.font };
     phFields.concat(utFields).forEach(function (el) { var p = el._placement; if (p) fieldTransform(el, p.x, p.y, p.width, p.height); });
     S.wallShown = look.wall; S.wallPending = null; S.wallError = null;
+    if (S.c && S.c.dailyBing && look.bg === 'photo') setTimeout(function () { fetchBingDaily(false); }, 0);
+    else if (S.c && !S.c.dailyBing) clearBingPhoto();
   }
   function cleanPatch(patch) {
     var out = {}, k;
@@ -1936,6 +2034,7 @@
   cueL.innerHTML = icon('left'); cueR.innerHTML = icon('right');
   initialise();
   initWeather();
+  initBing();
   refreshCatalog();
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();

@@ -37,6 +37,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 /* Caption: the clock, or the name of the mode Home is in */
 .caption{position:absolute;left:140px;top:72px;display:flex;flex-direction:column;gap:4px;max-width:1040px}
 .clock,.cap-title{font-size:48px;line-height:64px;font-weight:500;letter-spacing:-1.5px;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.22)}
+.clock{font-size:76px;line-height:88px;font-weight:500;letter-spacing:-2px}
+.clock .clock-ap{font-size:28px;line-height:1;margin-left:12px;opacity:.72;letter-spacing:.04em;vertical-align:super;font-weight:500}
 .clock{font-variant-numeric:tabular-nums}
 .cap-line{max-width:100%;font-size:30px;line-height:40px;font-weight:500;letter-spacing:-.2px;color:rgba(255,255,255,.88);text-shadow:0 1px 2px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .warn{display:inline-flex;gap:12px;align-items:flex-start;color:var(--warn)}
@@ -599,11 +601,33 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 @media(prefers-reduced-motion:reduce){.is-font-switch .home .ph-name,.is-font-switch .home .clock,.is-font-switch .home .tile .label,.is-font-switch .home .u-label,.is-font-switch .home .app-focus-name,.is-font-switch .home .util-focus-label{animation-duration:120ms}}
 
 
-/* Clean Home: weather in caption + outline utility marks */
-.caption .weather{display:inline-flex;align-items:baseline;gap:10px;margin-left:22px;opacity:.88;font-size:22px;letter-spacing:.02em}
-.caption .wx-temp{font-weight:600;font-size:28px}
+/* Clean Home v1.2.1: weather, uniform tile icons, HDMI overlay */
+.caption .weather{display:inline-flex;align-items:center;gap:10px;margin-left:22px;margin-top:6px;opacity:.9;font-size:22px;letter-spacing:.02em}
+.caption .wx-ico{width:28px;height:28px;flex:none;opacity:.92}
+.caption .wx-temp{font-weight:600;font-size:30px}
 .caption .wx-cond{opacity:.75}
 .caption .wx-place{opacity:.55;font-size:18px}
-.mark.outline-mark{display:inline-flex;align-items:center;justify-content:center}
-.mark.outline-mark .ico{width:62%;height:62%}
-.mark.native-icon img{border-radius:18px}
+.mark.tile-icon{
+  display:flex;align-items:center;justify-content:center;
+  border-radius:22px;overflow:hidden;
+  background:rgba(255,255,255,.14);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+}
+.bg-light .mark.tile-icon{background:rgba(20,18,16,.08);box-shadow:inset 0 0 0 1px rgba(20,18,16,.08)}
+.mark.tile-icon img{
+  position:relative;inset:auto;width:72%;height:72%;
+  object-fit:contain;border-radius:0;display:block;
+}
+.mark.tile-icon.outline-mark .ico{width:54%;height:54%;stroke-width:1.6}
+.mark.tile-icon.monogram span{
+  position:relative;width:72%;height:72%;display:flex;align-items:center;justify-content:center;
+  border-radius:14px;font-weight:600;
+}
+.mark.tile-icon.monogram span::after{display:none}
+body.is-hdmi .home,body.is-hdmi .appearance,body.is-hdmi .sheet,body.is-hdmi .utils,body.is-hdmi .caption{visibility:hidden}
+body.is-hdmi .stage{background:#000}
+body.is-hdmi::after{
+  content:"HDMI · press BACK to return";position:fixed;left:50%;bottom:48px;transform:translateX(-50%);
+  padding:12px 22px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:22px;
+  letter-spacing:.02em;pointer-events:none;z-index:99;
+}

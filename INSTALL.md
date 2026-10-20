@@ -1,5 +1,7 @@
 # Install Clean Home on your Samsung TV (Windows)
 
+App version covered here: **1.2.1**.
+
 This guide installs **Clean Home** (`KsHome0001.CleanHome`) — a CleanFrame-based launcher — on a 2024 Samsung Tizen TV from a Windows PC. Follow every step in order. Do not skip.
 
 ## What you need
