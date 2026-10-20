@@ -1,0 +1,624 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>Clean Home – Install guide</title><style>
+@page { size: A4; margin: 16mm 14mm 18mm; }
+body { font-family: 'Segoe UI', 'Noto Sans', 'DejaVu Sans', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1d2330; }
+h1 { font-size: 22pt; color: #12306b; border-bottom: 3px solid #2f6fdb; padding-bottom: 6px; margin-top: 0; }
+h2 { font-size: 15pt; color: #fff; background: #2f6fdb; padding: 6px 12px; border-radius: 6px; margin-top: 26px; break-after: avoid; }
+
+h3 { break-after: avoid; font-size: 12pt; color: #12306b; margin-top: 18px; }
+hr { display: none; }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 10px 0; }
+th, td { border: 1px solid #c9d3e6; padding: 5px 7px; vertical-align: top; text-align: left; }
+th { background: #eef3fc; }
+tr { break-inside: avoid; }
+code { background: #eef1f6; padding: 1px 4px; border-radius: 3px; font-family: Consolas, 'DejaVu Sans Mono', monospace; font-size: 9.5pt; }
+blockquote { margin: 10px 0; padding: 8px 12px; background: #fff8e1; border-left: 4px solid #f2b600; border-radius: 4px; }
+blockquote p { margin: 0; }
+figure { margin: 10px 0 14px; text-align: center; break-inside: avoid; }
+figure img { max-width: 92%; max-height: 95mm; border: 1px solid #c9d3e6; border-radius: 4px; }
+figcaption { font-size: 8.5pt; color: #5b6578; margin-top: 4px; }
+li { margin: 3px 0; }
+strong { color: #0d1b3d; }
+a { color: #1f5bd0; word-break: break-all; }
+</style></head><body><h1>Clean Home: step-by-step install guide (Windows PC → Samsung TV)</h1>
+<p>This guide puts <strong>Clean Home</strong>, your ad-free home screen, on your
+<strong>Samsung UA43DU7660KLXL</strong> TV (2024, Tizen) using a <strong>Windows 10 or 11</strong> PC.</p>
+<p>Follow the parts <strong>in order</strong>, A to J. Each step says exactly what to click, and
+<strong>"What you should see"</strong> tells you whether it worked. If something doesn't
+match, go to <strong>Part K – Troubleshooting</strong>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Part</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>Download the project from GitHub</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>B</td>
+<td>Find the PC's and TV's IP addresses</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>C</td>
+<td>Turn on Developer Mode on the TV</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>D</td>
+<td>Install Tizen Studio</td>
+<td>15–30 min</td>
+</tr>
+<tr>
+<td>E</td>
+<td>Add the Samsung TV tools (Package Manager)</td>
+<td>10–20 min</td>
+</tr>
+<tr>
+<td>F</td>
+<td>Open Tizen Studio for the first time</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td>G</td>
+<td>Connect Tizen Studio to the TV</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>H</td>
+<td>Create your Samsung certificate</td>
+<td>10 min</td>
+</tr>
+<tr>
+<td>I</td>
+<td>Install Clean Home on the TV</td>
+<td>5 min</td>
+</tr>
+<tr>
+<td>J</td>
+<td>Put Clean Home first on the TV's home row</td>
+<td>2 min</td>
+</tr>
+<tr>
+<td>K</td>
+<td>Troubleshooting</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Before you start, have ready:</strong></p>
+<ul>
+<li>The PC and the TV on the <strong>same Wi-Fi / home router</strong>.</li>
+<li>About <strong>8 GB free</strong> on drive C:.</li>
+<li>Your <strong>GitHub</strong> login (account <code>chaosmanage</code>).</li>
+<li>A <strong>Samsung account</strong> (email + password). The one you use on a Samsung phone
+  or TV works. If you don't have one, create it free at <a href="https://account.samsung.com">https://account.samsung.com</a>.</li>
+<li>Pen and paper for <strong>two things you must not lose</strong>: the certificate password
+  (Part H) and the IP addresses (Part B).</li>
+</ul>
+<blockquote>
+<p>Pictures in this guide come from Samsung's official developer documentation
+(credited under each picture and in "Picture credits" at the end). Samsung's
+pictures may show a different TV model or an older Windows look, but the
+buttons and words are the same. Where no official picture exists, the step
+describes exactly what's on screen.</p>
+</blockquote>
+<hr />
+<h2>Part A – Download the project from GitHub</h2>
+<p>The project is in a <strong>private</strong> GitHub repository, so you must be signed in to see it.</p>
+<ol>
+<li>Open <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> on the PC.</li>
+<li>Go to <a href="https://github.com">https://github.com</a> and click <strong>Sign in</strong> (top right). Sign in as
+   <strong>chaosmanage</strong>.</li>
+<li>Go to <a href="https://github.com/chaosmanage/samsung-tv-launcher">https://github.com/chaosmanage/samsung-tv-launcher</a>.</li>
+</ol>
+<p><strong>What you should see:</strong> a page titled <strong>samsung-tv-launcher</strong> with a list
+   of files (<code>config.xml</code>, <code>index.html</code>, <code>css</code>, <code>js</code>, <code>INSTALL.md</code>, …).
+   If you see <strong>"404 – Page not found"</strong>, you are not signed in as chaosmanage.
+   Go back to step 2.</p>
+<ol start="4">
+<li>Click the green <strong><code>&lt;&gt; Code</code></strong> button (above the file list, on the right).</li>
+<li>In the box that opens, click <strong>Download ZIP</strong> (the last line).</li>
+</ol>
+<figure><img alt="GitHub Code button and Download ZIP" src="img/a2-github-code-download-zip.png" /><figcaption><em>The <strong>Code</strong> button and <strong>Download ZIP</strong>, highlighted in red. This picture
+   was taken on a public example project; your project's page looks the same,
+   with a different name. (Screenshot of github.com, taken Oct 2026.)</em></figcaption></figure>
+<ol start="6">
+<li>The browser downloads a file called <strong><code>samsung-tv-launcher-main.zip</code></strong> into your
+   <strong>Downloads</strong> folder (<code>C:\Users\&lt;your name&gt;\Downloads</code>). In Chrome it shows
+   at the top right; in Edge, under the download arrow ↓.</li>
+<li>Make the destination folder: open <strong>File Explorer</strong> (Windows key + E), click
+   <strong>This PC</strong> → <strong>Local Disk (C:)</strong>, right-click an empty area →
+   <strong>New</strong> → <strong>Folder</strong>, and name it <strong><code>TV</code></strong>. You now have <strong><code>C:\TV</code></strong>.</li>
+<li>In File Explorer open <strong>Downloads</strong>, <strong>right-click</strong>
+   <code>samsung-tv-launcher-main.zip</code> → <strong>Extract All…</strong>
+   (Windows 11: it's in the first menu; if not, click <strong>Show more options</strong> first).</li>
+<li>In the <strong>Extract Compressed (Zipped) Folders</strong> window, replace the text in
+   the box with <strong><code>C:\TV</code></strong> (or click <strong>Browse…</strong> and pick <code>C:\TV</code>). Leave
+   <strong>"Show extracted files when complete"</strong> ticked. Click <strong>Extract</strong>.</li>
+</ol>
+<p><strong>What you should see:</strong> File Explorer opens <code>C:\TV</code> with <strong>one folder</strong>,
+   <strong><code>samsung-tv-launcher-main</code></strong>. Open it. Inside you should see
+   <strong><code>config.xml</code></strong>, <strong><code>index.html</code></strong>, <strong><code>icon.png</code></strong>, and folders <strong><code>css</code></strong>,
+   <strong><code>js</code></strong>, <strong><code>docs</code></strong>.</p>
+<blockquote>
+<p>✅ The correct folder is <strong><code>C:\TV\samsung-tv-launcher-main</code></strong>, the one that
+<em>directly</em> contains <code>config.xml</code>. You'll pick this folder in Part I.
+If you see a second <code>samsung-tv-launcher-main</code> folder inside the first,
+you extracted somewhere else. Use the inner one (the one containing
+<code>config.xml</code>).</p>
+</blockquote>
+<hr />
+<h2>Part B – Find the IP addresses (write both down)</h2>
+<h3>B1. The PC's IP address</h3>
+<ol>
+<li>Click <strong>Start</strong>, type <strong><code>cmd</code></strong>, and click <strong>Command Prompt</strong>.</li>
+<li>In the black window type <strong><code>ipconfig</code></strong> and press <strong>Enter</strong>.</li>
+<li>Find the section for the connection you use:
+   - Wi-Fi: <strong>"Wireless LAN adapter Wi-Fi:"</strong>
+   - Cable: <strong>"Ethernet adapter Ethernet:"</strong></li>
+</ol>
+<p>Ignore sections whose names contain <em>vEthernet</em>, <em>VirtualBox</em>, <em>VMware</em>,
+   <em>Bluetooth</em>, or that say <em>Media disconnected</em>.
+4. In that section, read <strong>IPv4 Address</strong>. It looks like
+   <code>IPv4 Address. . . . . . . . . . . : 192.168.1.23</code></p>
+<p><strong>Write down:</strong> PC IP = <code>192.168.___.___</code></p>
+<h3>B2. The TV's IP address</h3>
+<ol>
+<li>On the TV remote press <strong>Home</strong> (🏠), go to <strong>Settings</strong> (⚙ at the bottom
+   left of the menu) → <strong>All Settings</strong> → <strong>Connection</strong> → <strong>Network</strong> →
+   <strong>Network Status</strong> → <strong>IP Settings</strong>.</li>
+<li>Read <strong>IP Address</strong>.</li>
+</ol>
+<p><strong>Write down:</strong> TV IP = <code>192.168.___.___</code></p>
+<p><strong>What you should see:</strong> the first three groups of numbers are usually
+   <strong>the same</strong> as the PC's (for example both start <code>192.168.1.</code>). If they're
+   completely different, the PC and TV are probably on different networks. Fix
+   that first (Part K).</p>
+<hr />
+<h2>Part C – Turn on Developer Mode on the TV</h2>
+<blockquote>
+<p><strong>Typing numbers:</strong> if your remote has no number buttons, press the
+<strong>123</strong> button (or the button with coloured dots) to show a number pad on
+screen, then pick the numbers with the arrows and <strong>OK</strong>.</p>
+</blockquote>
+<ol>
+<li>Press <strong>Home</strong> (🏠) on the remote. At the top, choose <strong>Apps</strong>.</li>
+</ol>
+<figure><img alt="Apps on the Samsung home screen" src="img/c1-apps-panel.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 1.</em></figcaption></figure>
+<ol start="2">
+<li>Scroll <strong>all the way down</strong> the Apps screen to the <strong>Settings</strong> row and
+   open <strong>App Settings</strong>.</li>
+</ol>
+<figure><img alt="App Settings at the bottom of Apps" src="img/c2-apps-settings-location.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 2.</em></figcaption></figure>
+<ol start="3">
+<li><strong>What you should see:</strong> a screen titled <strong>Settings</strong> showing your apps as
+   big tiles.</li>
+</ol>
+<figure><img alt="App Settings screen" src="img/c3-apps-settings.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 3.</em></figcaption></figure>
+<ol start="4">
+<li>On this screen type <strong>1 2 3 4 5</strong> with the remote (number buttons or the
+   on-screen pad). Nothing appears while you type; that's normal.</li>
+<li><strong>What you should see:</strong> a box with <strong>Developer mode: Off</strong>, two buttons
+   <strong>On</strong> / <strong>Off</strong>, and <strong>Host PC IP</strong>.</li>
+</ol>
+<figure><img alt="Developer mode box" src="img/c4-developer-mode.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 4.</em></figcaption></figure>
+<ol start="6">
+<li>Select <strong>On</strong>.</li>
+<li>Select the four <strong>Host PC IP</strong> boxes and type your <strong>PC IP</strong> from Part B1
+   (one number group per box, e.g. <code>192</code> <code>168</code> <code>1</code> <code>23</code>).</li>
+<li>Select <strong>OK</strong>.</li>
+<li><strong>What you should see:</strong> an <strong>Information</strong> box saying the TV must be
+   restarted, and that you can turn it off by holding the power button for 2
+   seconds. Select <strong>Close</strong>.</li>
+</ol>
+<figure><img alt="Restart message" src="img/c5-reboot-popup.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 5.</em></figcaption></figure>
+<ol start="10">
+<li><strong>Restart the TV properly:</strong> press and <strong>hold</strong> the <strong>Power</strong> button on
+    the remote for about 2–5 seconds, until the screen goes black. Wait 10
+    seconds, then press Power again to turn it on. (Or unplug the TV from the
+    wall for 30 seconds and plug it back in.)</li>
+<li>
+<p><strong>Check it worked:</strong> go back to <strong>Home → Apps → App Settings</strong> (steps 1–2).</p>
+<p><strong>What you should see:</strong> the title now reads <strong>Settings (DEVELOP MODE)</strong>.</p>
+<figure><img alt="Develop mode banner" src="img/c6-developer-mode-enabled.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 6.</em></figcaption></figure>
+<p>If it still says just <strong>Settings</strong>, repeat steps 4–10.</p>
+</li>
+</ol>
+<p>Source for this part: <a href="https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html">Samsung Developer – TV Device</a></p>
+<hr />
+<h2>Part D – Install Tizen Studio</h2>
+<p>You don't need to install Java separately. Tizen Studio has included its own
+Java since version 3.7 (<a href="https://developer.tizen.org/development/tizen-studio/download/prerequisites">Tizen prerequisites</a>).</p>
+<ol>
+<li>Open your <strong>Downloads</strong> folder and find the installer you downloaded. It
+   is named like <strong><code>web-ide_Tizen_Studio_6.1_windows-64.exe</code></strong> (6.0 is fine
+   too). If you don't have it, download it from
+   <a href="https://developer.tizen.org/development/tizen-studio/download">https://developer.tizen.org/development/tizen-studio/download</a>
+   (Windows, <strong>Tizen Studio … with IDE installer</strong>), or directly from
+   <a href="https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-ide_Tizen_Studio_6.1_windows-64.exe">https://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-ide_Tizen_Studio_6.1_windows-64.exe</a>
+   (about 640 MB).</li>
+<li><strong>Double-click</strong> the <code>.exe</code>.</li>
+<li>If a blue box says <strong>"Windows protected your PC"</strong> (Microsoft Defender
+   SmartScreen): click <strong>More info</strong>, then <strong>Run anyway</strong>.
+   If <strong>"Do you want to allow this app to make changes to your device?"</strong> appears, click <strong>Yes</strong>.</li>
+<li><strong>License screen:</strong> read it, tick/choose to accept, and click <strong>Accept</strong>.</li>
+</ol>
+<figure><img alt="License agreement" src="img/d1-installer-license.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 1.</em></figcaption></figure>
+<ol start="5">
+<li><strong>Installation Settings screen:</strong> two boxes, the SDK location and the
+   data location.
+   - Set the first to <strong><code>C:\tizen-studio</code></strong>
+   - Set the second to <strong><code>C:\tizen-studio-data</code></strong></li>
+</ol>
+<p>(Click the box and type, or use the <strong>…</strong> button.) <strong>Don't</strong> use
+   <code>C:\Program Files</code>: Tizen tools then need admin rights and misbehave.
+   When no red error text is shown, click <strong>Install</strong>.</p>
+<figure><img alt="Install location" src="img/d2-installer-location.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 2.</em></figcaption></figure>
+<ol start="6">
+<li>Wait. It downloads and installs (5–20 minutes depending on your internet).</li>
+<li><strong>Last screen:</strong> make sure <strong>"Launch the Package Manager"</strong> is <strong>ticked</strong>,
+   then click <strong>Finish</strong>.</li>
+</ol>
+<figure><img alt="Installation completed" src="img/d3-installer-finished.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 3.</em></figcaption></figure>
+<p><strong>What you should see:</strong> the <strong>Package Manager</strong> window opens (blue banner
+"TIZEN STUDIO Package Manager"). Continue with Part E.</p>
+<blockquote>
+<p>If Package Manager did not open, open File Explorer, go to
+<strong><code>C:\tizen-studio\package-manager\</code></strong> and double-click
+<strong><code>package-manager.exe</code></strong>.</p>
+</blockquote>
+<p>Source: <a href="https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html">Samsung Developer – Installing TV SDK</a></p>
+<hr />
+<h2>Part E – Add the Samsung TV tools (Package Manager)</h2>
+<blockquote>
+<p>Package Manager shows a warning: <em>"Please make sure Tizen IDE and Tools are
+closed before Installation"</em>. Keep Tizen Studio closed during this part.</p>
+</blockquote>
+<ol>
+<li>In Package Manager you see three tabs: <strong>Main SDK</strong>, <strong>Extension SDK</strong>,
+   <strong>Progress</strong>.</li>
+</ol>
+<figure><img alt="Package Manager" src="img/e1-package-manager.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 4.</em></figcaption></figure>
+<ol start="2">
+<li><strong>Main SDK tab (check only):</strong> find <strong>Tizen SDK tools</strong>. Its button
+   should say <strong>uninstall</strong> or show as installed. That's correct: the
+   installer already added it. If it says <strong>install</strong>, click <strong>install</strong>,
+   accept the license, and wait.</li>
+<li>Click the <strong>Extension SDK</strong> tab.</li>
+</ol>
+<figure><img alt="Extension SDK tab" src="img/e2-extension-tab.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 5.</em></figcaption></figure>
+<ol start="4">
+<li>Under <strong>Extras</strong>, click <strong>install</strong> next to <strong>both</strong>:
+   - <strong>TV Extensions-9.0</strong> (the name ends with a version number; pick the
+     <strong>highest</strong> number listed. On current versions this is 9.0)
+   - <strong>Samsung Certificate Extension</strong></li>
+</ol>
+<figure><img alt="Required extensions" src="img/e3-required-extensions.png" /><figcaption><em>The two <strong>install</strong> buttons to click (red boxes). The picture shows
+   "TV Extensions-x.x"; yours shows a real number. Source: Samsung
+   Developer, "Installing TV SDK", Figure 6.</em></figcaption></figure>
+<ol start="5">
+<li>A license window appears. Click <strong>Accept All</strong>.</li>
+<li>Wait. The <strong>Progress</strong> tab shows the download. TV Extensions is large (over 1 GB),
+   so this can take 10–30 minutes.</li>
+</ol>
+<figure><img alt="Extensions installing" src="img/e4-extensions-installing.png" /><figcaption><em>Source: Samsung Developer, "Installing TV SDK", Figure 7.</em></figcaption></figure>
+<ol start="7">
+<li><strong>What you should see when done:</strong> in the Extension SDK tab, both lines
+   now have an <strong>uninstall</strong> button (or an <strong>update</strong> button). If
+   <strong>Samsung Certificate Extension</strong> shows <strong>update</strong>, click it: Samsung says
+   versions older than <strong>2.0.73</strong> can no longer create certificates after
+   September 2025.</li>
+<li>Close Package Manager.</li>
+</ol>
+<hr />
+<h2>Part F – Open Tizen Studio for the first time</h2>
+<ol>
+<li>Open Tizen Studio either way:
+   - <strong>Start</strong> → type <strong>Tizen Studio</strong> → click it, <strong>or</strong>
+   - File Explorer → <strong><code>C:\tizen-studio\ide\</code></strong> → double-click <strong><code>TizenStudio.exe</code></strong>.</li>
+<li>If <strong>"Windows protected your PC"</strong> appears: <strong>More info</strong> → <strong>Run anyway</strong>.</li>
+<li>A window <strong>"Select a directory as workspace"</strong> appears. Type
+   <strong><code>C:\TV\workspace</code></strong> and click <strong>Launch</strong>. (Optionally tick "Use this as
+   the default".)</li>
+<li>If a <strong>Windows Security Alert</strong> says <em>"Windows Defender Firewall has
+   blocked some features of this app"</em> (for <em>Java/OpenJDK Platform binary</em>,
+   <em>sdb</em>, or <em>Tizen Studio</em>): tick <strong>Private networks</strong>, then click <strong>Allow access</strong>.</li>
+<li>A <strong>Welcome</strong> page may show. Close the <strong>Welcome</strong> tab (× on the tab).</li>
+</ol>
+<p><strong>What you should see:</strong> the main Tizen Studio window, with a menu bar
+<strong>File, Edit, …, Tools, Window, Help</strong> and an empty <strong>Project Explorer</strong> on the left.</p>
+<hr />
+<h2>Part G – Connect Tizen Studio to the TV</h2>
+<p>The TV must be <strong>on</strong>, and showing <strong>Develop Mode</strong> (Part C step 11).</p>
+<ol>
+<li>In Tizen Studio click <strong>Tools</strong> → <strong>Device Manager</strong>.</li>
+</ol>
+<figure><img alt="Device Manager" src="img/g1-device-manager.jpg" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 5.</em></figcaption></figure>
+<ol start="2">
+<li>In Device Manager click the <strong>Remote Device Manager</strong> icon (top right,
+   the phone-and-monitor icon), then click <strong>+</strong> in the small window.</li>
+</ol>
+<figure><img alt="Remote Device Manager and + button" src="img/g2-remote-device-manager.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 6.</em></figcaption></figure>
+<ol start="3">
+<li>In <strong>Add Device</strong> fill in:
+   - <strong>Name:</strong> <code>MyTV</code>
+   - <strong>IP:</strong> your <strong>TV IP</strong> from Part B2
+   - <strong>Port:</strong> <code>26101</code> (leave as is)</li>
+</ol>
+<p>Click <strong>Add</strong>.</p>
+<figure><img alt="Add Device" src="img/g3-add-device.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 7.</em></figcaption></figure>
+<ol start="4">
+<li>In the Remote Device Manager list, switch <strong>Connection</strong> for MyTV to <strong>On</strong>.</li>
+</ol>
+<figure><img alt="Connection On" src="img/g4-connect.png" /><figcaption><em>Source: Samsung Developer, "TV Device", Figure 8.</em></figcaption></figure>
+<ol start="5">
+<li>If a Windows firewall alert appears now, tick <strong>Private networks</strong> →
+   <strong>Allow access</strong>.</li>
+<li>Click <strong>Close</strong> on the small Remote Device Manager window.</li>
+</ol>
+<p><strong>What you should see:</strong> in the Device Manager main list a line with your TV's
+model name (for example <strong>UA43DU7660KLXL</strong> or similar) and the TV's IP with
+<code>:26101</code>. That means it is connected. <strong>Keep Device Manager open</strong> (you need
+it in Part H and I).</p>
+<p>If the switch flips back to Off or nothing appears, see Part K, "Can't connect".</p>
+<hr />
+<h2>Part H – Create your Samsung certificate</h2>
+<p>Samsung only lets your own apps run on TVs listed in your certificate. This
+part makes that certificate and puts your TV in it.</p>
+<blockquote>
+<p>📝 You will choose a <strong>password</strong>. <strong>Write it on paper now.</strong> If you lose it,
+you'll have to make a new certificate and reinstall the app.</p>
+</blockquote>
+<ol>
+<li>In Tizen Studio click <strong>Tools</strong> → <strong>Certificate Manager</strong>.</li>
+</ol>
+<figure><img alt="Tools &gt; Certificate Manager" src="img/h01-launch-cert-manager.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 1.</em></figcaption></figure>
+<ol start="2">
+<li>If a <strong>"Migration for Certificate Profile"</strong> box appears, click <strong>Cancel</strong>.</li>
+</ol>
+<figure><img alt="Migration dialog" src="img/h02-migration.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 2.</em></figcaption></figure>
+<ol start="3">
+<li>Click the <strong>+</strong> button to create a new profile.</li>
+</ol>
+<figure><img alt="New certificate profile" src="img/h03-new-profile.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 3.</em></figcaption></figure>
+<ol start="4">
+<li>Choose <strong>Samsung</strong> (not Tizen).</li>
+</ol>
+<figure><img alt="Choose Samsung" src="img/h04-samsung.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 4.</em></figcaption></figure>
+<ol start="5">
+<li>Choose <strong>TV</strong> → <strong>Next</strong>.</li>
+</ol>
+<figure><img alt="Choose TV" src="img/h05-tv.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 5.</em></figcaption></figure>
+<ol start="6">
+<li><strong>Certificate profile name:</strong> type <strong><code>MyTV</code></strong> → <strong>Next</strong>.</li>
+</ol>
+<figure><img alt="Profile name" src="img/h06-profile-name.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 6.</em></figcaption></figure>
+<ol start="7">
+<li>Choose <strong>Create a new author certificate</strong> → <strong>Next</strong>.</li>
+</ol>
+<figure><img alt="New author certificate" src="img/h07-new-author.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 7.</em></figcaption></figure>
+<ol start="8">
+<li>Fill in:
+   - <strong>Author name:</strong> your name, e.g. <code>Kunal</code>
+   - <strong>Password</strong> and <strong>Confirm password:</strong> choose one and <strong>write it down</strong>
+   - Leave <strong>"Apply the same password for the distributor certificate"</strong> ticked</li>
+</ol>
+<p>Click <strong>Next</strong>.</p>
+<figure><img alt="Author details" src="img/h08-author-info.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 8.</em></figcaption></figure>
+<ol start="9">
+<li>A <strong>Samsung account sign-in</strong> window opens. Sign in with your Samsung
+   account email and password (approve any phone/email verification).</li>
+</ol>
+<figure><img alt="Samsung sign-in" src="img/h09-samsung-login.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 9.</em></figcaption></figure>
+<ol start="10">
+<li>
+<p><strong>Backup location:</strong> leave the suggested folder (it's inside
+    <code>C:\tizen-studio-data\keystore</code>) → <strong>Next</strong>.</p>
+<figure><img alt="Backup path" src="img/h10-backup-path.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 10.</em></figcaption></figure>
+</li>
+<li>
+<p>Choose <strong>Create a new distributor certificate</strong> → <strong>Next</strong>.</p>
+<figure><img alt="New distributor certificate" src="img/h11-new-distributor.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 13.</em></figcaption></figure>
+</li>
+<li>
+<p>On the <strong>Distributor Certificate</strong> page:</p>
+<ul>
+<li><strong>Privilege:</strong> choose <strong>Public</strong></li>
+<li>Under <strong>Add individual DUIDs</strong>, your connected TV's ID (a long code,
+  the DUID) should already be filled in, because Device Manager is connected. If the first
+  box is empty, click the <strong>+</strong> next to it to add the connected TV.
+  Do <strong>not</strong> type anything else.</li>
+</ul>
+<p>Click <strong>Next</strong>.</p>
+<figure><img alt="Privilege and DUID" src="img/h12-privilege-duid.png" /><figcaption><em>Privilege <strong>Public</strong>, and the DUID box (red boxes). In your window the
+DUID box should contain your TV's code. Source: Samsung Developer,
+"Creating Certificates", Figure 14.</em></figcaption></figure>
+<blockquote>
+<p>If the DUID box stays empty: close the wizard (Cancel), make sure Device
+Manager shows the TV connected (Part G), and start Part H again.</p>
+</blockquote>
+</li>
+<li>
+<p>Click <strong>Finish</strong>.</p>
+<figure><img alt="Distributor certificate created" src="img/h13-distributor-done.png" /><figcaption><em>Source: Samsung Developer, "Creating Certificates", Figure 15.</em></figcaption></figure>
+</li>
+<li>
+<p><strong>What you should see:</strong> back in Certificate Manager, <strong>MyTV</strong> in the list,
+    with a <strong>tick / "active"</strong> mark. If another profile is active, click
+    <strong>MyTV</strong> and set it as active (the check-mark icon). Close Certificate Manager.</p>
+</li>
+</ol>
+<p>Source: <a href="https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html">Samsung Developer – Creating Certificates</a></p>
+<hr />
+<h2>Part I – Install Clean Home on the TV</h2>
+<h3>I1. Allow installs from this PC (do this once)</h3>
+<ol>
+<li>Go to <strong>Device Manager</strong> (Tools → Device Manager if you closed it).</li>
+<li><strong>Right-click</strong> your TV in the list → <strong>Permit to install applications</strong>.</li>
+</ol>
+<p><strong>What you should see:</strong> a short success message, or nothing. Both are
+   fine. (If you get an error but installation later works, ignore it.)</p>
+<h3>I2. Bring the project into Tizen Studio</h3>
+<ol>
+<li>In Tizen Studio click <strong>File</strong> → <strong>Import…</strong></li>
+<li>Open <strong>General</strong>, choose <strong>Existing Projects into Workspace</strong> → <strong>Next</strong>.</li>
+<li>Select <strong>Select root directory</strong>, click <strong>Browse…</strong>, choose
+   <strong><code>C:\TV\samsung-tv-launcher-main</code></strong> (the folder with <code>config.xml</code>) → <strong>Select Folder</strong>.</li>
+<li><strong>What you should see:</strong> under <strong>Projects</strong>, <strong>CleanHome</strong> appears, ticked.
+   Leave <strong>"Copy projects into workspace"</strong> <strong>unticked</strong>. Click <strong>Finish</strong>.</li>
+<li><strong>CleanHome</strong> now appears in <strong>Project Explorer</strong> on the left.</li>
+</ol>
+<blockquote>
+<p>If <strong>No projects are found</strong>, see Part K, "Import finds no project".</p>
+</blockquote>
+<h3>I3. Install and run</h3>
+<ol>
+<li>Check the TV is still connected (Device Manager shows it).</li>
+<li>In <strong>Project Explorer</strong>, <strong>right-click CleanHome</strong> → <strong>Run As</strong> →
+   <strong>Tizen Web Application</strong>.</li>
+<li>If asked to choose a device, choose your TV.</li>
+<li>Wait 10–30 seconds. The <strong>Console</strong> at the bottom shows progress, ending with
+   lines like <em>"Installing the package…"</em>, <em>"… install completed"</em>,
+   <em>"Launching the Tizen application…"</em>.</li>
+</ol>
+<p><strong>What you should see on the TV:</strong> the <strong>Clean Home</strong> screen opens: a dark
+screen with a greeting and clock at the top and 8 big tiles (<strong>HDMI,
+YouTube, Netflix, ZEE5, Prime Video, JioHotstar, Sony LIV, Internet</strong>).
+Use the arrows and <strong>OK</strong> to try it. 🎉</p>
+<p>You can now close Tizen Studio. Clean Home stays installed on the TV.</p>
+<hr />
+<h2>Part J – Put Clean Home first on the TV's home row</h2>
+<ol>
+<li>Press <strong>Home</strong> (🏠) → <strong>Apps</strong> → scroll to the bottom → <strong>App Settings</strong>
+   (same screen as Part C step 3).</li>
+<li>Highlight <strong>Clean Home</strong>, press <strong>Down</strong> on the remote, choose
+   <strong>Add to Home</strong> (if you only see Delete/Lock, it's already on Home).</li>
+<li>Press <strong>Home</strong> (🏠). In the row of apps, highlight <strong>Clean Home</strong>, press
+   <strong>Down</strong>, choose <strong>Move</strong>, press <strong>Left</strong> until it's in the <strong>first
+   position</strong>, and press <strong>OK</strong>.</li>
+</ol>
+<p><strong>What you should see:</strong> from now on, <strong>Home → OK</strong> (or Home, then the first
+app) opens Clean Home.</p>
+<p>Tip: for extra privacy, also go to <strong>Settings → All Settings → General &amp; Privacy
+→ Terms &amp; Privacy</strong> and switch off <strong>Internet Based Advertisement</strong> and
+<strong>Viewing Information Services</strong>.</p>
+<hr />
+<h2>Part K – Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Problem / message</th>
+<th>Why it happens</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GitHub shows <strong>404</strong></td>
+<td>Not signed in as chaosmanage (the project is private)</td>
+<td>Sign in as chaosmanage, open the link again (Part A).</td>
+</tr>
+<tr>
+<td><strong>Can't connect</strong> / TV not in Device Manager / Connection switch turns off</td>
+<td>Developer Mode off, wrong IP, different network, or PC IP changed</td>
+<td>1) Check <strong>Settings (DEVELOP MODE)</strong> on the TV (Part C step 11). 2) Run <code>ipconfig</code> again: if the PC IP changed, re-enter it on the TV (Part C steps 4–10). 3) Check the TV IP (Part B2) matches what you typed in <strong>Add Device</strong>. 4) Both must be on the same router (not one on a guest Wi-Fi). 5) Restart the TV (hold Power).</td>
+</tr>
+<tr>
+<td><strong>Developer Mode turned off</strong> or "Develop Mode" missing after a restart / power cut</td>
+<td>The TV sometimes resets it, or the PC got a new IP from the router</td>
+<td>Redo Part C steps 1–11 with the current PC IP. The app stays installed.</td>
+</tr>
+<tr>
+<td>Windows <strong>firewall</strong> prompt, or connection blocked</td>
+<td>Windows Defender Firewall</td>
+<td>Click <strong>Allow access</strong> with <strong>Private networks</strong> ticked. If you missed it: Start → <strong>Windows Security</strong> → <strong>Firewall &amp; network protection</strong> → <strong>Allow an app through firewall</strong> → <strong>Change settings</strong> → tick <strong>Private</strong> for <em>OpenJDK/Java Platform binary</em> and <em>sdb</em>. Also make sure your Wi-Fi is set to <strong>Private</strong> network (Settings → Network &amp; internet → Wi-Fi → your network → <strong>Private network</strong>).</td>
+</tr>
+<tr>
+<td><strong>"Windows protected your PC"</strong></td>
+<td>SmartScreen doesn't know the installer</td>
+<td><strong>More info</strong> → <strong>Run anyway</strong>.</td>
+</tr>
+<tr>
+<td>DUID box empty in Part H</td>
+<td>TV not connected while creating the certificate</td>
+<td>Connect first (Part G), then redo Part H.</td>
+</tr>
+<tr>
+<td><strong>Certificate / DUID mismatch</strong>, e.g. <em>"install failed[118 …] Check certificate error"</em></td>
+<td>Certificate made without this TV's DUID, a <strong>Tizen</strong> (not Samsung) profile is active, or the wrong profile is active</td>
+<td>Certificate Manager: make sure <strong>MyTV</strong> (type Samsung, TV) is <strong>active</strong>. If unsure, delete it and redo Part H with the TV connected. Then Part I1 (<strong>Permit to install applications</strong>) and I3 again.</td>
+</tr>
+<tr>
+<td><em>"install failed[118, -12] … Invalid signature. Signed with wrong key…"</em></td>
+<td>App was signed with a different certificate than a copy already on the TV, or files changed after signing</td>
+<td>On the TV: Apps → App Settings → Clean Home → Down → <strong>Delete</strong>. Then Part I1 and I3 again.</td>
+</tr>
+<tr>
+<td><em>"install failed[118, -11]"</em> or a plain <em>"install failed[118]"</em></td>
+<td>General install refusal. Usually the same certificate causes as above, or <em>Permit to install</em> not done</td>
+<td>Do Part I1, check <strong>MyTV</strong> is active, delete any old Clean Home from the TV, try I3 again. If it still fails, redo Part H choosing <strong>Privilege: Partner</strong> instead of Public, then I1 + I3.</td>
+</tr>
+<tr>
+<td><em>"1010 : App install fail"</em></td>
+<td>Usually certificate problems (Samsung's list)</td>
+<td>Same as the certificate rows above.</td>
+</tr>
+<tr>
+<td><em>"1013 : App run fail"</em></td>
+<td>Installed, but the TV couldn't open it this time</td>
+<td>Open Clean Home from the TV's Apps, or restart the TV.</td>
+</tr>
+<tr>
+<td><strong>Import finds no project</strong> (Part I2)</td>
+<td>Hidden project files (<code>.project</code>) missing from the download</td>
+<td>Make a fresh project and copy the files in: <strong>File → New → Tizen Project</strong> → <strong>Template</strong> → <strong>TV-Samsung</strong> (highest version) → <strong>Web Application</strong> → <strong>Basic Project</strong> → name <strong>CleanHome</strong> → <strong>Finish</strong>. Then, in File Explorer, copy <strong>everything</strong> from <code>C:\TV\samsung-tv-launcher-main</code> into <code>C:\TV\workspace\CleanHome</code> and choose <strong>Replace the files in the destination</strong>. In Tizen Studio right-click CleanHome → <strong>Refresh</strong>, then Part I3.</td>
+</tr>
+<tr>
+<td>Package Manager won't open</td>
+<td>Damaged first-run settings</td>
+<td>Close it, delete the folder <code>C:\Users\&lt;your name&gt;\.package-manager</code>, and run <code>C:\tizen-studio\package-manager\package-manager.exe</code> again.</td>
+</tr>
+<tr>
+<td>A Clean Home tile says <em>"Couldn't open …"</em></td>
+<td>That app isn't installed on the TV, or uses a different ID</td>
+<td>Install the app from Samsung's Apps store. If it still fails, press <strong>Blue</strong> in Clean Home, note the app's ID, and send it to whoever maintains the project.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Picture credits</h2>
+<ul>
+<li>Developer Mode on the TV (<code>docs/img/c1</code>–<code>c6</code>) and Device Manager (<code>g1</code>–<code>g4</code>):
+  Samsung Developer, <strong>TV Device</strong>,
+  <a href="https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html">https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html</a></li>
+<li>Installer (<code>d1</code>–<code>d3</code>) and Package Manager (<code>e1</code>–<code>e4</code>): Samsung Developer,
+  <strong>Installing TV SDK</strong>,
+  <a href="https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html">https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html</a></li>
+<li>Certificate Manager (<code>h01</code>–<code>h13</code>): Samsung Developer, <strong>Creating
+  Certificates</strong>,
+  <a href="https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html">https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html</a></li>
+<li>GitHub (<code>a2</code>): screenshot of github.com (public example repository
+  octocat/Hello-World), red boxes added. Taken October 2026.</li>
+</ul>
+<p>All Samsung images © Samsung Electronics, reproduced from Samsung's developer
+documentation for instructional purposes.</p>
+<h2>Sources</h2>
+<ul>
+<li>Samsung Developer – Installing TV SDK; TV Device; Creating Certificates (links above)</li>
+<li>Samsung Developer – TV Extension release history (TV Extensions 9.0, Jan 2025):
+  <a href="https://developer.samsung.com/smarttv/develop/tools/tv-extension/release-history.html">https://developer.samsung.com/smarttv/develop/tools/tv-extension/release-history.html</a></li>
+<li>Tizen – Prerequisites (no Java needed since Tizen Studio 3.7):
+  <a href="https://developer.tizen.org/development/tizen-studio/download/prerequisites">https://developer.tizen.org/development/tizen-studio/download/prerequisites</a></li>
+<li>Tizen installer downloads: <a href="https://download.tizen.org/sdk/Installer/">https://download.tizen.org/sdk/Installer/</a></li>
+<li>Tizen Studio 6.0 release notes (Windows 11 support; avoid admin-only folders):
+  <a href="https://docs.tizen.org/application/tizen-studio/release-notes/6-0-release-notes/">https://docs.tizen.org/application/tizen-studio/release-notes/6-0-release-notes/</a></li>
+<li>"Permit to install applications" and certificate errors: Samsung Developer
+  FAQ <a href="https://developer.samsung.com/tizen/Smart-TV/FAQ/Tizen-baseline-SDK.html">https://developer.samsung.com/tizen/Smart-TV/FAQ/Tizen-baseline-SDK.html</a>;
+  Stack Overflow <a href="https://stackoverflow.com/questions/74192274">https://stackoverflow.com/questions/74192274</a></li>
+</ul></body></html>
