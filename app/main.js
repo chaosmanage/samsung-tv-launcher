@@ -116,9 +116,24 @@
   }
   /* Optional LAN debug beacon (empty in release builds). */
   var CH_DEBUG_URL = '';
+  /* Debug builds only. Failed beacons (network not up yet at boot) are queued and resent, so early
+     boot lines are not lost; each keeps its original t. */
+  var CH_DQ = [], CH_DQ_T = 0;
+  function chDebugSend(body) {
+    try {
+      var x = new XMLHttpRequest(); x.open('POST', CH_DEBUG_URL + '/log', true); x.setRequestHeader('Content-Type', 'text/plain');
+      x.onerror = x.ontimeout = function () { chDebugQueue(body); };
+      x.onload = function () { if (x.status < 200 || x.status >= 300) chDebugQueue(body); };
+      x.send(body);
+    } catch (e) { chDebugQueue(body); }
+  }
+  function chDebugQueue(body) {
+    if (CH_DQ.length < 300) CH_DQ.push(body);
+    if (!CH_DQ_T) CH_DQ_T = setTimeout(function () { CH_DQ_T = 0; var q = CH_DQ; CH_DQ = []; q.forEach(chDebugSend); }, 2000);
+  }
   function chDebug(evt, data) {
     if (!CH_DEBUG_URL) return;
-    try { var x = new XMLHttpRequest(); x.open('POST', CH_DEBUG_URL + '/log', true); x.setRequestHeader('Content-Type', 'text/plain'); x.send(JSON.stringify({ evt: evt, t: Date.now(), data: data })); } catch (e) {}
+    chDebugSend(JSON.stringify({ evt: evt, t: Date.now(), data: data }));
   }
   function log(text) { S.log.unshift('#' + (++S.logN) + ' ' + text); if (S.log.length > 10) S.log.pop(); }
 
@@ -2422,15 +2437,31 @@
     COLD.tries++;
     handoffShow('cold-raise');
     chDebug('cold-boot', { step: 'raise', why: why, try: COLD.tries, hidden: !!(document.hidden || document.webkitHidden), focus: document.hasFocus ? document.hasFocus() : null });
+    var t0 = Date.now();
+    function ok(how) { chDebug('cold-boot', { step: 'raise-ok', how: how, try: COLD.tries, ms: Date.now() - t0 }); }
+    function plain(e) {
+      if (e) chDebug('cold-boot', { step: 'raise-ac-err', err: String(e && (e.message || e.name) || e).slice(0, 120) });
+      try { tizen.application.launch('KsHome0001.CleanHome', function () { ok('launch'); },
+        function (e2) { chDebug('cold-boot', { step: 'raise-err', err: String(e2 && (e2.message || e2.name) || e2) }); });
+      } catch (e3) { chDebug('cold-boot', { step: 'raise-throw', err: String(e3).slice(0, 120) }); }
+    }
+    /* 1.2.9 used launch(), which reloaded the page (+~3 s). SkipReload=Yes is what tvctx-manager sends
+       to resume a running web app without reloading it. */
     try {
-      tizen.application.launch('KsHome0001.CleanHome', function () { chDebug('cold-boot', { step: 'raise-ok', try: COLD.tries }); },
-        function (e) { chDebug('cold-boot', { step: 'raise-err', err: String(e && (e.message || e.name) || e) }); });
-    } catch (e) { chDebug('cold-boot', { step: 'raise-throw', err: String(e).slice(0, 120) }); }
+      var ac = new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/default', null, null, null,
+        [new tizen.ApplicationControlData('SkipReload', ['Yes']), new tizen.ApplicationControlData('CH_RAISE', ['1'])]);
+      tizen.application.launchAppControl(ac, 'KsHome0001.CleanHome', function () { ok('appcontrol'); }, plain);
+    } catch (e) { plain(e); }
   }
   function coldBoot() {
     var info = launchInfo();
     if (COLD.done || !isColdBootLaunch(info)) return;
     COLD.done = true;
+    var pt = (window.performance && performance.timing) || {}, ns = pt.navigationStart || 0;
+    chDebug('cold-boot', { step: 'timing', navStart: ns, sinceNav: ns ? Date.now() - ns : null,
+      fetchStart: pt.fetchStart ? pt.fetchStart - ns : null, responseEnd: pt.responseEnd ? pt.responseEnd - ns : null,
+      domLoading: pt.domLoading ? pt.domLoading - ns : null, domInteractive: pt.domInteractive ? pt.domInteractive - ns : null,
+      headScript: window.__CH_T0 ? window.__CH_T0 - ns : null });
     chDebug('cold-boot', { step: 'detect', useAsHome: useAsHome(), hidden: !!(document.hidden || document.webkitHidden), focus: document.hasFocus ? document.hasFocus() : null, data: info.data });
     if (!useAsHome()) {
       handoffHide(); HANDOFF.at = Date.now(); HANDOFF.hook = 'cold-boot'; HANDOFF.key = launchKey(info);
@@ -2443,8 +2474,17 @@
       return;
     }
     handoffShow('cold-boot-on');
-    setTimeout(function () { if (!inFront()) raiseSelf('1500ms'); else chDebug('cold-boot', { step: 'in-front', at: 1500 }); }, 1500);
-    setTimeout(function () { if (!inFront() && COLD.tries < 2) raiseSelf('4000ms'); else chDebug('cold-boot', { step: 'check-4s', inFront: inFront(), tries: COLD.tries }); }, 4000);
+    window.addEventListener('focus', function () { COLD.seen = true; });
+    document.addEventListener('keydown', function () { COLD.seen = true; }, true);
+    /* 1.2.9 waited 1.5 s first; detect already reports focus:false, so raise right away and re-check. */
+    if (!inFront()) raiseSelf('immediate'); else chDebug('cold-boot', { step: 'in-front', at: 0 });
+    [1500, 4000, 8000].forEach(function (at) {
+      setTimeout(function () {
+        /* Never steal the screen back once Clean Home had focus or a key was pressed (user may have opened an app). */
+        if (!COLD.seen && !inFront() && COLD.tries < 4) raiseSelf(at + 'ms');
+        else chDebug('cold-boot', { step: 'check', at: at, inFront: inFront(), seen: !!COLD.seen, tries: COLD.tries });
+      }, at);
+    });
   }
 
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */

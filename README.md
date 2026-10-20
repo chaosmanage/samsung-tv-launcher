@@ -1,6 +1,6 @@
 # Clean Home
 
-**A quiet, ad-free home screen for Samsung Tizen TVs.** Version **1.2.9**.
+**A quiet, ad-free home screen for Samsung Tizen TVs.** Version **1.2.10**.
 
 Clean Home (`KsHome0001.CleanHome`) replaces Samsung's busy, ad-filled Smart Hub with a calm full-screen
 photo, a clock with local weather, and a single glass dock of the apps you actually use. It's built for
@@ -152,7 +152,7 @@ Samsung Home is also always one press away in Clean Home's header.
 The TV Plus button is **not** remapped. Every attempt failed and has been removed; see
 [docs/TVPLUS-REMAP-POSTMORTEM.md](docs/TVPLUS-REMAP-POSTMORTEM.md).
 
-## Cold-boot black screen (1.2.6, 1.2.8, 1.2.9)
+## Cold-boot black screen (1.2.6, 1.2.8–1.2.10)
 
 With **Use Clean Home as Home screen** Off, versions 1.2.4–1.2.5 treated bare
 `operation/main` like a Home-key press and blacked the page to hand off to Samsung Home.
@@ -165,7 +165,8 @@ if Samsung Home did not take over.
 launches Clean Home in the **background** (`__K_BG_LAUNCH=enable`, `entry_point=cold_booting`), and
 sometimes nothing brings it to the front. Clean Home now handles that boot launch itself. With the toggle On,
 it raises itself if it isn't in front after 1.5 s (retrying once at 4 s). With the toggle Off, it hands off
-to Samsung Home. This is still waiting on a plug-pull test (see CHANGELOG).
+to Samsung Home. 1.2.10 raises immediately without reloading the page. Most of the ~30 s black on a plug-pull boot is spent
+before Clean Home's code first runs. This is still not confirmed fixed (see CHANGELOG).
 
 ## FAQ and troubleshooting
 

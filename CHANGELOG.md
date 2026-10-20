@@ -2,6 +2,27 @@
 
 All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade steps: [docs/UPDATE.md](docs/UPDATE.md).
 
+## 1.2.10 (2026-10-20) — debug build, cold-boot still NOT fixed
+
+### Test A on 1.2.9 (toggle On, plug pull, ~23:42 IST): FAILED, black for ~30 s
+Times are IST. The TV kernel booted at about 23:42:11 (from `/proc/uptime`). The Clean Home process was
+started about 2 s later. Clean Home's JavaScript first ran at **23:42:45**, about 34 s after boot. That gap
+is spent inside the TV's web runtime before any Clean Home code runs, not in Clean Home code. 1.2.9 waited
+1.5 s, then raised itself (`raise-ok` at 23:42:47). The raise reloaded the whole page, so the page showed
+only at 23:42:50 (`pageshow`). Clean Home's own share was therefore about 5 s, of which 1.5 s was the
+deliberate wait and about 3 s the reload. 1.2.9's debug beacons weren't queued. Because each line's TV
+timestamp matched the PC's receive time, the first lines are real and none were lost.
+
+### Changed
+- Cold-boot raise (toggle On) now happens immediately, with no 1.5 s wait. It uses `launchAppControl` with
+  `SkipReload=Yes` (what tvctx-manager uses to resume a running web app), so it shouldn't reload the page.
+  It falls back to `launch()`. It re-checks at 1.5, 4 and 8 s, with at most 4 raises. It stops retrying once
+  Clean Home has had focus or a key was pressed, so it can't pull the screen away from an app you opened.
+- Debug builds log `performance.timing` (navigation start → head script → DOM) on a cold boot, and queue
+  and resend beacons that fail before the network is up.
+- None of this shortens the ~30 s the web runtime takes before Clean Home's code first runs. Clean Home has
+  no control over that part. The plug-pull test will show whether that time is the TV's normal boot.
+
 ## 1.2.9 (2026-10-20) — debug build installed for testing, cold-boot fix NOT yet confirmed
 
 ### Fixed (pending a plug-pull test)
