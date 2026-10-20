@@ -637,3 +637,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .mat-img.is-live-glass{filter:blur(16px) saturate(1.08) brightness(.9);-webkit-filter:blur(16px) saturate(1.08) brightness(.9)}
 .bg-photo .mat-scrim{display:none}
 .bg-photo .mat-veil,.bg-photo.tone-light .mat-veil{background:rgba(8,14,18,.12)}
+
+/* v1.2.3 uniform slots: native icons/monograms occupy exactly the mark slot, no backplate. */
+.mark.native-mark{background:none!important;box-shadow:none!important;border-radius:0!important;overflow:visible}
+.mark.native-mark img{position:absolute;object-fit:contain;border-radius:22%}
+.mark.native-mark.monogram{text-align:center;font-weight:600;letter-spacing:-.5px;color:var(--ink,#fff)}
+.mark.native-mark.monogram>span{display:block}

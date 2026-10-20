@@ -51,7 +51,7 @@ for app_id in ['9Ur5IzDKqV.TizenYouTube', 'org.tizen.netflix-app', 'wKDM33Rods.Z
     assert app_id in device, 'Missing app id in device.js: ' + app_id
 main = (app / 'main.js').read_text()
 assert "id: 'hdmi'" in main and "id: 'samsunghome'" not in main and "utils() { return ['samsunghome', 'apps', 'settings']; }" in main, 'Samsung Home must be a header control, not a dock app'
-for f in ['mono/hdmi.png', 'mono/zee5.png', 'mono/sonyliv.png', 'hotstar.svg', 'browser.svg', 'youtube.svg', 'netflix.svg', 'primevideo.svg', 'tizen-placeholder-ref.png']:
+for f in ['mono/hdmi.png', 'mono/zee5.png', 'sonyliv.svg', 'smartthings.svg', 'mono/hotstar.png', 'mono/browser.png', 'youtube.svg', 'netflix.svg', 'primevideo.svg', 'tizen-placeholder-ref.png']:
     assert (app / 'assets/icons' / f).is_file(), 'Missing dock mark: ' + f
 assert 'Wakad, Pune' in main
 assert 'api.open-meteo.com' in main

@@ -149,11 +149,18 @@
     hdmi: true, youtube: true, netflix: true, zee5: true, primevideo: true,
     hotstar: true, sonyliv: true, browser: true
   };
+  /* Bundled high-res marks for well-known dynamically added apps (keyed by Tizen appId). */
+  var KNOWN_MARK = [[/smartthings/i, 'smartthings'], [/spotify/i, 'spotify'], [/netflix/i, 'netflix'], [/youtube(?!.*(kids|music|tv))/i, 'youtube'], [/prime ?video/i, 'primevideo']];
+  function knownMark(a) {
+    var key = (a.appId || a.id || '') + ' ' + (a.name || ''), i;
+    for (i = 0; i < KNOWN_MARK.length; i++) if (KNOWN_MARK[i][0].test(key)) return KNOWN_MARK[i][1];
+    return '';
+  }
   /* CleanFrame-style single-ink marks (CSS mask in currentColor). SVGs from Simple Icons /
-     CleanFrame, hand-drawn SVGs for JioHotstar and Internet, and white masks derived from the
-     official artwork for HDMI, ZEE5 and Sony LIV (scripts/make-mono-marks.py). */
+     CleanFrame, a hand-drawn SVG for Internet, and white masks derived from the
+     official artwork for HDMI, ZEE5, JioHotstar and Sony LIV (scripts/make-mono-marks.py). */
   var MARK_FILE = { hdmi: 'mono/hdmi.png', youtube: 'youtube.svg', netflix: 'netflix.svg', zee5: 'mono/zee5.png',
-    primevideo: 'primevideo.svg', hotstar: 'hotstar.svg', sonyliv: 'mono/sonyliv.png', browser: 'browser.svg' };
+    primevideo: 'primevideo.svg', hotstar: 'mono/hotstar.png', sonyliv: 'sonyliv.svg', browser: 'mono/browser.png' };
   function markFile(id) { return ICONS + (MARK_FILE[id] || id + '.svg'); }
   function dockIconSrc(id) { return ICONS + 'dock/' + id + '.png'; }
   /* The TV's own icon (ApplicationInformation.iconPath) is preferred. Each one is
@@ -164,25 +171,31 @@
   /* Tizen's default pinwheel placeholder (YouTube 9Ur5IzDKqV and JioHotstar fiZNCxMH9Y ship
      it as their iconPath on this TV). Compared as a 16x16 RGBA fingerprint, alpha included,
      against a reference copy taken from the TV. */
-  var PIN_REF = null, pinRefImg = new Image();
+  var PIN_REFS = [], PIN_PENDING = 2;
   function fp(im) {
     var c = document.createElement('canvas'); c.width = 16; c.height = 16;
     var g = c.getContext('2d'); g.clearRect(0, 0, 16, 16); g.drawImage(im, 0, 0, 16, 16);
     return g.getImageData(0, 0, 16, 16).data;
   }
-  pinRefImg.onload = function () { try { PIN_REF = fp(pinRefImg); } catch (e) {} };
-  pinRefImg.src = ICONS + 'tizen-placeholder-ref.png';
+  ['tizen-placeholder-ref.png', 'tizen-placeholder-ref2.png'].forEach(function (f) {
+    var r = new Image();
+    r.onload = function () { try { PIN_REFS.push(fp(r)); } catch (e) {} PIN_PENDING--; };
+    r.onerror = function () { PIN_PENDING--; };
+    r.src = ICONS + f;
+  });
   function isPinwheel(im) {
     try {
-      if (!PIN_REF) return false;
-      var d = fp(im), sum = 0, i;
-      for (i = 0; i < d.length; i++) sum += Math.abs(d[i] - PIN_REF[i]);
-      return sum / d.length < 22;
+      var d = fp(im);
+      return PIN_REFS.some(function (ref) {
+        var sum = 0, i;
+        for (i = 0; i < d.length; i++) sum += Math.abs(d[i] - ref[i]);
+        return sum / d.length < 22;
+      });
     } catch (e) { return false; }
   }
   function verifyTvIcon(path) {
     if (!path || TV_ICON[path]) return;
-    if (!PIN_REF && pinRefImg.complete === false) { setTimeout(function () { verifyTvIcon(path); }, 300); return; }
+    if (PIN_PENDING > 0) { setTimeout(function () { verifyTvIcon(path); }, 300); return; }
     TV_ICON[path] = 'pending';
     var im = new Image();
     im.onload = function () {
@@ -195,22 +208,20 @@
     im.src = path;
   }
   function appMark(a, w, h, size) {
+    /* Every app gets the SAME slot (w x h) as CleanFrame marks: no backplates, no special sizes.
+       Known apps: single-ink mask mark. Others: the TV's own iconPath (if it is a real icon,
+       not the Tizen placeholder), contained in the slot; else a monogram in the same ink. */
     if (MARK_FILE[a.id] && maskSupport) return markHtml(a.id, w, h, size);
-    var side = Math.min(w, h, size || w);
-    if (side < 96) side = Math.max(w, h);
-    var box = 'width:' + side + 'px;height:' + side + 'px';
+    if (knownMark(a) && maskSupport) return markHtml(knownMark(a), w, h, size);
+    var slot = 'width:' + w + 'px;height:' + h + 'px', side = Math.round(Math.min(w, h, (size || h) * 1.15));
+    var img = 'width:' + side + 'px;height:' + side + 'px;left:' + Math.round((w - side) / 2) + 'px;top:' + Math.round((h - side) / 2) + 'px';
+    if (MARK_FILE[a.id]) return '<span class="mark native-mark" style="' + slot + '"><img alt="" src="' + dockIconSrc(a.id) + '" style="' + img + '"></span>';
     if (a.icon) {
       verifyTvIcon(a.icon);
-      if (TV_ICON[a.icon] === 'ok') return '<span class="mark bundled-icon tv-icon" style="' + box + '"><img alt="" src="' + esc(a.icon) + '"></span>';
-    }
-    if (DOCK_ICON[a.id]) {
-      return '<span class="mark bundled-icon" style="' + box + '"><img alt="" src="' + dockIconSrc(a.id) + '"></span>';
-    }
-    if (a.outline && SVG[a.outline]) {
-      return '<span class="mark bundled-icon outline-mark" style="' + box + '">' + icon(a.outline, 'outline-ico', true) + '</span>';
+      if (TV_ICON[a.icon] === 'ok') return '<span class="mark native-mark tv-icon" style="' + slot + '"><img alt="" src="' + esc(a.icon) + '" style="' + img + '"></span>';
     }
     var words = a.name.split(/\s+/), letters = words[0].charAt(0) + (words.length > 1 ? words[1].charAt(0) : '');
-    return '<span class="mark bundled-icon monogram" style="' + box + ';font-size:' + Math.round(side * .36) + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
+    return '<span class="mark native-mark monogram" style="' + slot + ';font-size:' + Math.round(side * .6) + 'px;line-height:' + h + 'px"><span>' + esc(letters.toUpperCase()) + '</span></span>';
   }
   function smallMark(a) { return appMark(a, 56, 56, 56); }
   var measureCanvas = document.createElement('canvas'), measureContext = measureCanvas.getContext('2d'), measureSpan = document.createElement('span');
@@ -1408,7 +1419,7 @@
     if (it.kind === 'add') return '<span class="add">' + icon('plus') + '</span><span class="label">' + (full ? 'Home is full' : 'Add app') + '</span>';
     a = app(it.id);
     body = S.c.apps === 'text' ? '' : appMark(a, S.c.apps === 'icons' ? 136 : 120, S.c.apps === 'icons' ? 88 : 72, S.c.apps === 'icons' ? 72 : 58);
-    return body + (S.c.apps === 'icons' ? '' : '<span class="label" style="font-size:' + dockLabelSize(a.id) + 'px;top:' + ((S.c.apps === 'text' ? 28 : MARK_FILE[a.id] && maskSupport ? 128 : 144) + fontShift('primary', dockLabelSize(a.id))) + 'px"><span class="label-ink">' + esc(a.name) + '</span></span>') + '<span class="nudge nudge-l">' + icon('left') + '</span><span class="nudge nudge-r">' + icon('right') + '</span>';
+    return body + (S.c.apps === 'icons' ? '' : '<span class="label" style="font-size:' + dockLabelSize(a.id) + 'px;top:' + ((S.c.apps === 'text' ? 28 : 128) + fontShift('primary', dockLabelSize(a.id))) + 'px"><span class="label-ink">' + esc(a.name) + '</span></span>') + '<span class="nudge nudge-l">' + icon('left') + '</span><span class="nudge nudge-r">' + icon('right') + '</span>';
   }
   /* A wide label can reach the shelf before its icon. Check the rendered icon box,
      including during the track's 180ms transition, so both disappear together. */
@@ -2077,11 +2088,36 @@
     } catch (e) {}
     chDebug('home-reset', { reason: reason, from: from, now: top().id });
   }
-  window.addEventListener('appcontrol', function () { resetToMain('appcontrol'); });
+  /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
+  function launchInfo() {
+    var o = {};
+    try {
+      var rac = tizen.application.getCurrentApplication().getRequestedAppControl();
+      if (rac) {
+        o.caller = rac.callerAppId || '';
+        o.op = rac.appControl && rac.appControl.operation || '';
+        o.uri = rac.appControl && rac.appControl.uri || '';
+        o.data = (rac.appControl && rac.appControl.data || []).slice(0, 12).map(function (d) { return d.key + '=' + String(d.value).slice(0, 60); });
+      }
+    } catch (e) { o.err = String(e).slice(0, 80); }
+    return o;
+  }
+  window.addEventListener('appcontrol', function () { chDebug('launch', { hook: 'appcontrol', info: launchInfo() }); resetToMain('appcontrol'); });
+  document.addEventListener('webkitvisibilitychange', function () { if (!document.webkitHidden) { chDebug('launch', { hook: 'webkitvisible', info: launchInfo() }); resetToMain('webkitvisible'); } });
+  window.addEventListener('pageshow', function () { resetToMain('pageshow'); });
+  var blurAt = 0;
+  window.addEventListener('blur', function () { blurAt = Date.now(); chDebug('launch', { hook: 'blur' }); });
+  window.addEventListener('focus', function () {
+    var away = blurAt ? Date.now() - blurAt : 0; blurAt = 0;
+    chDebug('launch', { hook: 'focus', away: away, info: launchInfo() });
+    /* Long loss of focus = we were covered (Home overlay, another app). Come back to the main home. */
+    if (away > 1000 && S.stack.length > 1) resetToMain('focus');
+  });
+  chDebug('launch', { hook: 'start', info: launchInfo() });
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
     if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); }
-    else { release(); resetToMain('visible'); updateClock(); }
+    else { release(); chDebug('launch', { hook: 'visible', info: launchInfo() }); resetToMain('visible'); updateClock(); }
   });
   window.addEventListener('resize', fit);
  
@@ -2161,7 +2197,9 @@
       caption: (document.querySelector('.caption') || {}).textContent || '', gaps: gaps,
       header: Array.prototype.map.call(document.querySelectorAll('.utils .u'), function (b) { return b.getAttribute('data-action'); }),
       marks: Array.prototype.map.call(document.querySelectorAll('.dock .tile .mark'), function (m) { var k = m.querySelector('.mk'); return (m.getAttribute('data-mark') || 'img') + ':' + (k ? (getComputedStyle(k).webkitMaskImage || '').split('/').pop().slice(0, 22) : 'bundled'); }),
-      msg: S.err ? String(S.err.message || S.err) : '' };
+      msg: S.err ? String(S.err.message || S.err) : '',
+      focusName: (function () { var n = document.querySelector('.app-focus-name.is-on'), r = n && n.getBoundingClientRect(), m = document.querySelector('.dock .tile.is-focus .mark'), q = m && m.getBoundingClientRect(); return n ? n.textContent + ' @x' + Math.round(r.left + r.width / 2) + ' y' + Math.round(r.top) + (q ? ' tileX' + Math.round(q.left + q.width / 2) + ' markBottom' + Math.round(q.bottom) : '') : 'none'; })(),
+      pitch: Array.prototype.map.call(document.querySelectorAll('.dock .tile'), function (t) { return Math.round(t.getBoundingClientRect().left); }) };
   }
     setInterval(function () {
       try {
@@ -2173,6 +2211,7 @@
           else if (c === 'editor') goScene('editor');
           else if (c === 'apps') goScene('apps');
           else if (c === 'shome') utilAction('samsunghome');
+          else if (c === 'right' || c === 'left' || c === 'up' || c === 'down') press(c);
           else if (c === 'internet' || c === 'youtube' || c === 'hotstar') launch(c === 'internet' ? 'browser' : c);
           else if (c === 'bundled' || c === 'bing') {
             var cw = next(S.c.home.slice(), S.c.recent.slice()); cw.dailyBing = c === 'bing';
@@ -2184,6 +2223,8 @@
       } catch (e) {}
     }, 1500);
     chDebug('start', { view: top().id });
+    document.addEventListener('keydown', function (ev) { chDebug('key', { code: ev.keyCode, key: ev.key || '', view: top().id }); }, true);
+    try { chDebug('keys', tizen.tvinputdevice.getSupportedKeys().map(function (k) { return k.name + ':' + k.code; }).filter(function (k) { return /home|exit|menu|smart|source|return|back|info/i.test(k); })); } catch (e) { chDebug('keys', String(e)); }
     setTimeout(function () { chDebug('state', dbgState('boot')); }, 9000);
   }
   initWeather();

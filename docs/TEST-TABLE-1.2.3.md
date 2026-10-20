@@ -21,3 +21,21 @@ Screenshot note: `sdb capture` / `0 screenshot` / `0 smartcapture` are unavailab
 - Installed launcher icon (pulled): `docs/images/installed-launcher-icon-v123.png`
 - Signed wgt on PC: `C:\Users\Kunal\CleanHome\dist\Clean Home.wgt`
 - Repo zip: `/workspace/launcher-repo.zip`
+
+## Final run: Tue 20 Oct 2026, 19:31–19:35 IST, UA43DU7660KLXL (192.168.1.136)
+
+| # | Test | Result | Evidence |
+|---|---|---|---|
+| F1 | Debug build installs and launches | PASS | `app_id[KsHome0001.CleanHome] install completed`; `0 execute` -> pid 2559 (19:31:37) |
+| F2 | Dock marks load on TV (all single-ink) | PASS | beacon `marks`: hdmi.png, youtube.svg, netflix.svg, zee5.png, primevideo.svg, **hotstar.png, sonyliv.svg, browser.png, spotify.svg** |
+| F3 | Spotify (user-added `rJeHak5zRg.Spotify`) gets the unified mark | PASS | beacon `home` includes `rJeHak5zRg.Spotify`; mark `spotify:spotify.svg` |
+| F4 | Equal spacing with 9 items incl. added app | PASS | beacon `pitch` = 112,296,…,1584 (constant 184px step) |
+| F5 | Focus label under the focused tile only, follows focus | PASS | `focusName` "YouTube @x384 y932 (markBottom 864)" then "JioHotstar @x1120 y932"; label top 68px under the mark bottom, centred on the tile |
+| F6 | Header has Samsung Home + All apps + Settings | PASS | beacon `header` = util.samsunghome, util.apps, util.settings |
+| F7 | Wallpaper single source (Bing) on all surfaces | PASS | beacon `walls`: photo/mat/bg/field/fieldAlt/utility/utilityAlt all = Bing BrownSloth URL |
+| F8 | Weather shows full "Wakad, Pune" | PASS | caption `…Clear nightWakad, Pune` |
+| F9 | Home from Settings (simulated `0 execute` while in Settings) | **FAIL / platform limit** | after `0 execute` at 19:33:01 the page received **no** appcontrol/visibility/pageshow/focus event (only real remote keys). `getSupportedKeys` exposes Menu/Info/Exit/Source only, no Home. Injection tools `input_keyevent` are permission-denied. |
+| F10 | Release build installed and running | PASS | install completed 19:34; `aul_test is_run` = running; `get_status` = 2 (STATUS_FOCUS); pid 1661; config `version="1.2.3"` |
+| F11 | Visual crispness of new marks on panel | PREVIEW ONLY | No screen capture on this TV; `docs/previews/dock-1.2.3-final.png` (Chromium render of the same files). Needs a photo from Kunal. |
+
+Note: Kunal was using the remote during this run (ArrowUp/Enter key events in the log), so the view values after the `right` commands reflect his navigation, not only the test.
