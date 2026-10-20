@@ -11,7 +11,7 @@ Keeps CleanFrame's screens, layout, styling and remote navigation. Adapted for t
 ## Attribution
 
 - Original project: CleanFrame © 2026 Nathan Clark, MIT License — see `LICENSE` and `THIRD_PARTY_NOTICES.md`.
-- Adaptation: Clean Home for Kunal S / chaosmanage — app identity `KsHome0001.CleanHome`.
+- Adaptation: Clean Home for chaosmanage — app identity `KsHome0001.CleanHome`.
 
 ## Apps on the dock (default order)
 
