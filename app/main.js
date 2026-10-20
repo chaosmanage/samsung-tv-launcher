@@ -2396,10 +2396,56 @@
     /* Hidden after boot: keep black for the toggle-Off no-flash, and restart the grace so the
        first visible moment leaves onEntry() 1.5 s to decide (hand off or show). */
     if (hidden && !boot) { BLACK_AT = now; return; }
-    if (now - Math.max(HANDOFF.at || 0, BLACK_AT) < 1500) return;
+    if (now - Math.max(HANDOFF.at || 0, BLACK_AT) < (HANDOFF.hook === 'cold-boot' ? 6000 : 1500)) return;  /* Samsung Home is slow at boot */
     handoffShow(hidden ? 'safety-boot' : 'safety-visible');
   }, 500);
   if (window.__CH_EARLY) setTimeout(function () { handoffShow('early-safety-1s'); }, 1000);
+
+  /* ---------- Cold boot (plug-pull) ----------
+     Measured on UA43DU7660 (20 Oct 2026, chdebug): startup_appid launches Clean Home in the BACKGROUND
+     (data __K_BG_LAUNCH=enable, entry_point=cold_booting, no caller). Nothing guarantees it is raised;
+     when nothing raises it the screen stays black until a remote power cycle (tvctx-manager relaunch).
+     Toggle On : raise ourselves if still not in front after ~1.5 s (retry once at ~4 s). Never black.
+     Toggle Off: boot into Samsung Home (hand off once). If that fails, raise Clean Home instead.
+     Home presses and app-list launches never carry cold_booting, so they are unchanged. */
+  var COLD = { done: false, tries: 0 };
+  function isColdBootLaunch(info) {
+    var d = '|' + ((info && info.data) || []).join('|') + '|';
+    return /\|entry_point=cold_booting\|/.test(d) || /\|__K_BG_LAUNCH=enable\|/.test(d);
+  }
+  function inFront() {
+    var hidden = document.hidden || document.webkitHidden;
+    var focused = document.hasFocus ? document.hasFocus() : true;
+    return !hidden && focused;
+  }
+  function raiseSelf(why) {
+    COLD.tries++;
+    handoffShow('cold-raise');
+    chDebug('cold-boot', { step: 'raise', why: why, try: COLD.tries, hidden: !!(document.hidden || document.webkitHidden), focus: document.hasFocus ? document.hasFocus() : null });
+    try {
+      tizen.application.launch('KsHome0001.CleanHome', function () { chDebug('cold-boot', { step: 'raise-ok', try: COLD.tries }); },
+        function (e) { chDebug('cold-boot', { step: 'raise-err', err: String(e && (e.message || e.name) || e) }); });
+    } catch (e) { chDebug('cold-boot', { step: 'raise-throw', err: String(e).slice(0, 120) }); }
+  }
+  function coldBoot() {
+    var info = launchInfo();
+    if (COLD.done || !isColdBootLaunch(info)) return;
+    COLD.done = true;
+    chDebug('cold-boot', { step: 'detect', useAsHome: useAsHome(), hidden: !!(document.hidden || document.webkitHidden), focus: document.hasFocus ? document.hasFocus() : null, data: info.data });
+    if (!useAsHome()) {
+      handoffHide(); HANDOFF.at = Date.now(); HANDOFF.hook = 'cold-boot'; HANDOFF.key = launchKey(info);
+      try {
+        FrameDevice.home(function (err) {
+          chDebug('cold-boot', { step: 'samsung-home', err: err ? (err.message || String(err)) : null, ms: Date.now() - HANDOFF.at });
+          if (err) raiseSelf('home-failed');
+        });
+      } catch (e) { chDebug('cold-boot', { step: 'samsung-home-throw', err: String(e).slice(0, 120) }); raiseSelf('home-threw'); }
+      return;
+    }
+    handoffShow('cold-boot-on');
+    setTimeout(function () { if (!inFront()) raiseSelf('1500ms'); else chDebug('cold-boot', { step: 'in-front', at: 1500 }); }, 1500);
+    setTimeout(function () { if (!inFront() && COLD.tries < 2) raiseSelf('4000ms'); else chDebug('cold-boot', { step: 'check-4s', inFront: inFront(), tries: COLD.tries }); }, 4000);
+  }
 
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
   function launchInfo() {
@@ -2608,4 +2654,5 @@
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
   if (!S.loadedFromStorage) setTimeout(function () { retryLoad(1); }, 1200);
   chDebug('launch', { hook: 'start-ready', useAsHome: useAsHome() });
+  coldBoot();
 })();

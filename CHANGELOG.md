@@ -2,6 +2,24 @@
 
 All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade steps: [docs/UPDATE.md](docs/UPDATE.md).
 
+## 1.2.9 (2026-10-20) — debug build installed for testing, cold-boot fix NOT yet confirmed
+
+### Fixed (pending a plug-pull test)
+- **Cold-boot black screen with the toggle On.** The 1.2.8 theory (a toggle-Off blackout) did not explain it:
+  Kunal still saw a black screen on a plug-pull boot with *Use Clean Home as Home screen* On. Debug logs show
+  `startup_appid` launches Clean Home in the **background** on a cold boot (`__K_BG_LAUNCH=enable`,
+  `entry_point=cold_booting`, no caller). Sometimes the system raises it a few seconds later, and sometimes
+  nothing does, so the page stays behind a black screen until a remote power cycle relaunches it. The black
+  screen is not the page itself. Clean Home was never brought to the front.
+  - Toggle **On**: on a cold-boot launch, Clean Home now raises itself (`tizen.application.launch` on its own
+    app id) if it isn't visible and focused after 1.5 s, and tries once more at 4 s. It makes at most 2 attempts.
+  - Toggle **Off**: on a cold-boot launch, Clean Home hands off to Samsung Home, so the TV boots into Samsung
+    Home. If that launch fails, Clean Home raises itself instead of staying black.
+  - Home-key presses (`entry_point=smarthub_key`) and app-list launches don't carry `cold_booting` and are
+    unchanged. This only runs once, at page start. No boot or startup vconfs were changed.
+- This build has debug beacons on (logging to the PC). It hasn't been plug-pull tested yet. The 1.2.6 and 1.2.8
+  cold-boot fixes were each reported as fixed before they were tested on a real cold boot, and neither fixed it.
+
 ## 1.2.8 (2026-10-20)
 
 ### Removed
