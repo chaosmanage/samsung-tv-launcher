@@ -58,4 +58,4 @@ header, caption) and polls `/cmd` for test commands (`settings`, `apps`, `bing`,
   Simple Icons set; Sony LIV = Simple Icons Sony wordmark + vector liv mark; JioHotstar star rebuilt from the official 2025
   logo (Wikimedia Commons, 3027px); Samsung Internet keyed from the official 2025 SVG (Commons); SmartThings = official 2024
   icon glyph (Commons SVG); ZEE5 and HDMI from bundled 512px artwork. All trademarks belong to their owners and are used only to identify the apps.
-- Adaptation: Clean Home for Kunal S / chaosmanage. MIT, same as CleanFrame. Keep Nathan Clark's copyright notice.
+- Adaptation: Clean Home for chaosmanage. MIT, same as CleanFrame. Keep Nathan Clark's copyright notice.
