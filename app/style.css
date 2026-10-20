@@ -656,3 +656,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .tile,.gt,.settings-group,.setting-choice{will-change:auto}
 .tile.is-focus .tile-content,.f-type .tile.is-focus .tile-content{transition:transform 120ms var(--ease),opacity 120ms linear}
 .at-appearance .scene,.at-wallpaper .scene{will-change:auto}
+
+/* v1.2.4 solid glass (default): no blurred images, plain translucent fills. Fast on ARMv7. */
+.glass-solid .mat-img,.glass-solid .mat-scrim,.glass-solid .sheet-bg,.glass-solid .ph-field-img{display:none!important}
+.glass-solid.bg-photo .mat-veil{background:rgba(10,14,18,.42)}
+.glass-solid.bg-photo .ph-veil{background:rgba(10,12,14,.46)}
+.glass-solid.bg-photo .sheet{background:rgba(10,13,16,.86)}
+.glass-solid .mat::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}

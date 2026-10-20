@@ -1135,7 +1135,7 @@
   function render() {
     var t = top(), sheet = !!V[t.id].sheet, shown = wall(S.shown ? S.shown.wall : S.c.wall), palette = ADAPTIVE_INK[shown.id];
     var adaptive = applyAdaptiveInk(palette), tr = adaptive && palette.tr ? palette.tr.pol : shown.ut.tr, br = adaptive && palette.br ? palette.br.pol : shown.ut.br;
-    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '');
+    stage.className = 'stage bg-' + S.c.bg + ' l-' + S.c.layout + ' v-' + S.variant + ' m-' + (materialApplies() ? S.c.material : 'none') + ' f-' + S.c.focus + ' a-' + S.c.apps + ' u-' + S.c.controls + ' g-' + S.geom + ' tone-' + shown.tone + ' tr-' + tr + ' br-' + br + wallClasses(shown) + inkRungClasses(palette, adaptive) + ' at-' + t.id + ' font-' + homeFont() + (homeFont() !== 'manrope' ? ' font-custom' : '') + (S.fontSwitch ? ' is-font-switch' : '') + (adaptive ? ' has-adaptive-ink adaptive-tl-' + palette.tl.pol : '') + (!adaptive && shown.clockInk ? ' has-clock-ink' : '') + (!adaptive && shown.dockClockInk ? ' has-dock-clock-ink' : '') + (registeredMaterial(shown.id) ? ' registered-material' : '') + (sheet ? ' is-sheet' : '') + (S.reflow ? ' is-reflow' : '') + ' glass-' + glassMode();
     if (!adaptive && shown.clockInk) stage.style.setProperty('--clock-ink', shown.clockInk);
     else stage.style.removeProperty('--clock-ink');
     if (!adaptive && shown.dockClockInk) stage.style.setProperty('--dock-clock-ink', shown.dockClockInk);
@@ -1266,6 +1266,9 @@
      full-res layers — that was the main ARMv7 cost). Nothing is written to the TV disk. */
   var WALL_CONSUMERS = ['photo', 'mat', 'bg', 'field', 'fieldAlt', 'utility', 'utilityAlt'];
   var GLASS = { src: '', url: '', gen: 0, blob: '' };
+  /* 'solid' = no blurred images at all (plain translucent fills). 'preblur' = one in-memory blurred copy. */
+  function glassMode() { try { return localStorage.getItem('cleanhome.glass') === 'preblur' ? 'preblur' : 'solid'; } catch (e) { return 'solid'; } }
+  function setGlassMode(v) { try { localStorage.setItem('cleanhome.glass', v); } catch (e) {} GLASS.src = ''; applyWallpaperEverywhere(); render(); }
   function activeWallpaperSrc() {
     if (S.c && S.c.dailyBing && BING.url) return BING.url;
     return WP + ((S.c && S.c.wall) || (WALLS[0] && WALLS[0].id)) + '.jpg';
@@ -1337,6 +1340,11 @@
     if (photo) {
       if (photo.getAttribute('data-live') !== src) { photo.setAttribute('data-live', src); photo.src = src; changed = true; }
       photo.className = (photo.className || '').replace(/\bis-live-glass\b/g, '').replace(/\bis-preblur\b/g, '').replace(/\s+/g, ' ').trim();
+    }
+    if (glassMode() === 'solid') {
+      WALL_CONSUMERS.forEach(function (k) { if (k !== 'photo' && IMG[k] && IMG[k].getAttribute('data-live') !== 'none') { IMG[k].setAttribute('data-live', 'none'); IMG[k].removeAttribute('src'); } });
+      if (changed) chDebug('wallpaper', { src: src, glass: 'solid' });
+      return;
     }
     paintGlass(src, function (glassSrc) {
       WALL_CONSUMERS.forEach(function (k) {
@@ -1957,7 +1965,8 @@
     imgs.fieldAlt = makeImg('ph-field-img is-preblur', src);
     imgs.utility = makeImg('ph-field-img is-preblur', src);
     imgs.utilityAlt = makeImg('ph-field-img is-preblur', src);
-    keys = Object.keys(imgs); left = keys.length;
+    if (glassMode() === 'solid') ['bg', 'mat', 'field', 'fieldAlt', 'utility', 'utilityAlt'].forEach(function (k) { imgs[k].removeAttribute('src'); imgs[k].setAttribute('data-live', 'none'); imgs[k].complete || 0; });
+    keys = glassMode() === 'solid' ? ['photo'] : Object.keys(imgs); left = keys.length;
     keys.forEach(function (k) { whenReady(imgs[k], function (ok) {
       allOk = allOk && ok;
       if (--left || token !== wallToken) return;
@@ -2293,6 +2302,24 @@
         });
       }, function (e) { chDebug('appsinfo-err', String(e)); });
     } catch (e) { chDebug('appsinfo-ex', String(e)); }
+  function perfRun(kind) {
+    var seq = [], res = [], i = 0;
+    if (kind === 'settings') { goScene('settings'); for (var a = 0; a < 5; a++) seq.push('down'); for (var b = 0; b < 5; b++) seq.push('up'); }
+    else if (kind === 'bg') { goScene('settings'); openAppearance('background'); for (var c2 = 0; c2 < 5; c2++) seq.push('down'); for (var d = 0; d < 5; d++) seq.push('up'); }
+    else { goScene('home'); for (var e = 0; e < 7; e++) seq.push('right'); for (var f = 0; f < 7; f++) seq.push('left'); }
+    function now() { return performance.now(); }
+    function step() {
+      if (i >= seq.length) {
+        var sy = res.map(function (r) { return r.sync; }).sort(function (x, y) { return x - y; }), fr = res.map(function (r) { return r.frame; }).sort(function (x, y) { return x - y; });
+        function q(a, p) { return Math.round(a[Math.min(a.length - 1, Math.floor(a.length * p))] * 10) / 10; }
+        chDebug('perfrun', { kind: kind, glass: glassMode(), n: res.length, syncMed: q(sy, .5), syncP90: q(sy, .9), frameMed: q(fr, .5), frameP90: q(fr, .9), frameMax: q(fr, 1) });
+        return;
+      }
+      var k = seq[i++], t0 = now(); lastNavAt = 0; press(k); var t1 = now();
+      requestAnimationFrame(function () { requestAnimationFrame(function () { res.push({ sync: t1 - t0, frame: now() - t0 }); setTimeout(step, 120); }); });
+    }
+    setTimeout(step, 1500);
+  }
   function dbgState(c) {
     var walls = {}, gaps = [];
     WALL_CONSUMERS.forEach(function (k) { var im = IMG[k]; walls[k] = im ? (im.currentSrc || im.src || '').split('/').pop() + (im.complete && im.naturalWidth ? '' : ' (not loaded)') : 'none'; });
@@ -2302,7 +2329,7 @@
       r1 = m.getBoundingClientRect(); r2 = l.getBoundingClientRect();
       if (r1.width) gaps.push((t.className.split(' ')[0]) + ':' + (l.textContent || '').slice(0, 14) + ':gap=' + Math.round(r2.top - r1.bottom) + ':icon=' + Math.round(r1.width));
     });
-    return { cmd: c, view: top().id, depth: S.stack.length, home: S.c.home, useAsHome: useAsHome(), catalog: ALPHA.length, dailyBing: S.c.dailyBing, bing: BING.url, walls: walls,
+    return { cmd: c, view: top().id, depth: S.stack.length, home: S.c.home, useAsHome: useAsHome(), glass: glassMode(), catalog: ALPHA.length, dailyBing: S.c.dailyBing, bing: BING.url, walls: walls,
       caption: (document.querySelector('.caption') || {}).textContent || '', gaps: gaps,
       header: Array.prototype.map.call(document.querySelectorAll('.utils .u'), function (b) { return b.getAttribute('data-action'); }),
       marks: Array.prototype.map.call(document.querySelectorAll('.dock .tile .mark'), function (m) { var k = m.querySelector('.mk'); return (m.getAttribute('data-mark') || 'img') + ':' + (k ? (getComputedStyle(k).webkitMaskImage || '').split('/').pop().slice(0, 22) : 'bundled'); }),
@@ -2320,6 +2347,14 @@
           else if (c === 'editor') goScene('editor');
           else if (c === 'apps') goScene('apps');
           else if (c === 'shome') utilAction('samsunghome');
+          else if (c === 'glass-solid' || c === 'glass-preblur') setGlassMode(c.slice(6));
+          else if (c.indexOf('perfrun') === 0) { perfRun(c.split(':')[1] || 'dock'); return; }
+          else if (c === 'back') press('back');
+          else if (c === 'ok') press('ok');
+          else if (c === 'home') goScene('home');
+          else if (c === 'samsungpage') { goScene('settings'); openAppearance('samsung'); }
+          else if (c === 'bgpage') { goScene('settings'); openAppearance('background'); }
+          else if (c === 'tvsettings') FrameDevice.settings(function (e) { chDebug('tvsettings', { err: e ? (e.message || String(e)) : null }); });
           else if (c === 'homeon') { setUseAsHome(true); }
           else if (c === 'homeoff') { setUseAsHome(false); }
           else if (c === 'right' || c === 'left' || c === 'up' || c === 'down') press(c);

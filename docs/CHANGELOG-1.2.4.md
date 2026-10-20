@@ -24,6 +24,8 @@
   `homesetting`, `quickpanel`, `floating-menu`, `broadcastingmenu`. Live verification required.
 
 ## Performance
+- **Default glass = solid** (`cleanhome.glass` = `solid`): no blurred images at all, plain translucent fills for dock, list fields and Settings. `preblur` mode is still available (debug `glass-preblur`) for A/B timing.
+- Debug `perfrun:dock|settings|bg` logs sync ms and next-frame ms (double rAF) per focus move.
 - Glass surfaces use **one in-memory pre-blurred 480×270 JPEG** (canvas) per wallpaper change
   instead of CSS `filter: blur()` on full-res Bing/bundled images.
 - Arrow key-repeat coalesced (~40ms); `perf` beacon logs ms per key when debug is on.
