@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://kunal.home/CleanHome" version="1.2.0" viewmodes="maximized">
+  <tizen:application id="KsHome0001.CleanHome" package="KsHome0001" required_version="2.3"/>
+  <content src="index.html"/>
+  <name>Clean Home</name>
+  <description>Ad-free CleanFrame-based launcher for Kunal's Samsung TV. HDMI, YouTube, Netflix, ZEE5, Prime Video, JioHotstar, Sony LIV, Browser, Samsung Home.</description>
+  <author href="https://github.com/chaosmanage">Kunal S</author>
+  <icon src="icon.png"/>
+  <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+  <tizen:profile name="tv-samsung"/>
+  <tizen:app-control>
+    <tizen:src name="index.html" reload="disable"/>
+    <tizen:operation name="http://samsung.com/appcontrol/operation/eden_resume"/>
+  </tizen:app-control>
+  <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+  <tizen:privilege name="http://tizen.org/privilege/application.info"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+  <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
+  <tizen:privilege name="http://tizen.org/privilege/system"/>
+  <tizen:privilege name="http://tizen.org/privilege/fullscreen"/>
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="enable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+  <tizen:metadata key="http://tizen.org/metadata/app_ui_type/base_screen_resolution" value="extensive"/>
+  <tizen:metadata key="http://samsung.com/tv/metadata/multitasking.support" value="true"/>
+  <access origin="https://api.open-meteo.com" subdomains="true"/>
+  <access origin="*" subdomains="true"/>
+</widget>
