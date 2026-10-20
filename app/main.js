@@ -392,7 +392,7 @@
   function safeId(id) { return typeof id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,160}$/.test(id) && ['constructor', 'prototype', '__proto__'].indexOf(id) < 0; }
   function safeIcon(path) { return typeof path === 'string' && path.length < (path.indexOf('data:') === 0 ? 400000 : 2048) && /^(?:\/[^\/]|file:\/\/\/|wgt-package:\/\/\/|data:image\/)/.test(path) ? path : ''; }
   function load() {
-    var keys = [KEY, 'cleanframe.home.v1', 'cleanframe.shore.v1'], raw, saved, i;
+    var keys = [KEY, KEY + '.bak', 'cleanframe.home.v1', 'cleanframe.shore.v1'], raw, saved, i;
     for (i = 0; i < keys.length; i++) {
       try {
         raw = localStorage.getItem(keys[i]);
@@ -444,8 +444,22 @@
     S.stack = [{ id: 'home', f: { zone: 'apps', u: 0 } }];
     S.sel = S.c.lastApp; S.selIdx = S.c.home.indexOf(S.sel);
     if (saved && initial.mode === 'open') initial.wall = WALLS[(wallIndex(initial.wall) + 1) % WALLS.length].id;
-    // Keep the old schema keys alongside the builder values for in-place updates.
-    try { localStorage.setItem(KEY, JSON.stringify(serialise(initial))); S.c = initial; storageOk = true; } catch (e) { storageOk = false; }
+    S.loadedFromStorage = !!saved;
+    S.c = initial;
+    /* Only migrate/rewrite when we actually read saved prefs. A transient empty read at a recovery
+       launch must never overwrite Kunal's dock/toggle with defaults. */
+    if (saved) { try { var js = JSON.stringify(serialise(initial)); localStorage.setItem(KEY, js); localStorage.setItem(KEY + '.bak', js); storageOk = true; } catch (e) { storageOk = false; } }
+    chDebug('prefs-load', { found: !!saved, dock: S.c.home.length, hasSpotify: S.c.home.some(function (id) { return /spotify/i.test(id); }) });
+  }
+  /* If storage was empty at boot, look again shortly (Tizen can be late after a recovery launch). */
+  function retryLoad(attempt) {
+    if (S.loadedFromStorage || S.writes > 0 || attempt > 4) return;
+    var saved = load();
+    if (saved) {
+      S.c = clean(saved); S.loadedFromStorage = true; S.sel = S.c.lastApp; S.selIdx = S.c.home.indexOf(S.sel);
+      chDebug('prefs-load', { found: true, retry: attempt, dock: S.c.home.length });
+      render();
+    } else setTimeout(function () { retryLoad(attempt + 1); }, 1500 * attempt);
   }
   function clearSession() { S.undo = []; S.removedAt = {}; S.note = null; S.err = null; }
   function begin() { S.note = null; }
@@ -453,7 +467,7 @@
   function snap() { return { home: S.c.home.slice(), recent: S.c.recent.slice() }; }
   function pushRecent(list, id) { return [id].concat(without(list, id)).slice(0, 5); }
   function write(c, label) {
-    try { localStorage.setItem(KEY, JSON.stringify(serialise(c))); }
+    try { var js = JSON.stringify(serialise(c)); localStorage.setItem(KEY, js); localStorage.setItem(KEY + '.bak', js); S.loadedFromStorage = true; }
     catch (e) { storageOk = false; S.failed++; S.err = label; log('Not saved: ' + label); return false; }
     if (c.wall !== S.c.wall || c.mode !== S.c.mode) resetRotation();
     storageOk = true; S.c = c; S.writes++; S.err = null; log('Saved: ' + label);
@@ -2184,36 +2198,39 @@
   /* Home preference: soft flag only. Never redirects an app-list launch away from Clean Home.
      When Off and this launch looks like a Home-key / main-operation takeover, hand off to Samsung Home.
      Native Home vconf is still managed by scripts/native-home on the PC (apply/restore). */
-  var HOME_PREF_KEY = 'cleanhome.home.v1';
+  /* Own key: the main config (cleanhome.home.v1) is rewritten on every save and would drop this flag. */
+  var HOME_PREF_KEY = 'cleanhome.homepref';
   function readHomePref() {
-    try { return JSON.parse(localStorage.getItem(HOME_PREF_KEY) || '{}') || {}; } catch (e) { return {}; }
+    try { return JSON.parse(localStorage.getItem(HOME_PREF_KEY) || localStorage.getItem(HOME_PREF_KEY + '.bak') || '{}') || {}; } catch (e) { return {}; }
   }
   function useAsHome() { return readHomePref().useAsHome !== false; }
   function setUseAsHome(on) {
     var p = readHomePref(); p.useAsHome = !!on;
-    try { localStorage.setItem(HOME_PREF_KEY, JSON.stringify(p)); } catch (e) {}
-    chDebug('home-pref', { useAsHome: !!on });
+    try { localStorage.setItem(HOME_PREF_KEY, JSON.stringify(p)); localStorage.setItem(HOME_PREF_KEY + '.bak', JSON.stringify(p)); } catch (e) {}
+    chDebug('home-pref', { useAsHome: !!on, readback: useAsHome() });
   }
+  /* Measured on UA43DU7660 (20 Oct 2026):
+     - Remote Home key  -> caller tvctx-manager, data entry_point=smarthub_key (op default).
+     - Opened from Samsung Home's app row -> LaunchFromHome=1, CallerId=com.samsung.tv.home.media. App-list: never redirect.
+     - sdb/app list, recovery relaunch -> no entry_point.  Never redirect. */
   function isHomeTriggeredLaunch(info) {
-    var op = (info && info.op) || '';
-    if (!op) return false;
-    if (/\/operation\/default$/i.test(op)) return false; /* app list / explicit open */
+    var op = (info && info.op) || '', data = (info && info.data) || [], d = '|' + data.join('|') + '|';
+    if (/\|LaunchFromHome=1\||\|Entry=launcher\||__K_EX_RECOVERY_LAUNCH=true/.test(d)) return false;
+    if (/\|entry_point=smarthub_key\|/.test(d)) return true;
     if (/\/operation\/main$/i.test(op)) return true;
-    if (/eden_resume/i.test(op)) return true;
     return false;
   }
-  function maybeHandOffHome(hook) {
+  function maybeHandOffHome(hook, forced) {
     if (useAsHome()) return false;
-    var info = launchInfo();
+    var info = forced || launchInfo();
     if (!isHomeTriggeredLaunch(info)) {
       chDebug('home-handoff-skip', { hook: hook, reason: 'not-home-launch', info: info, useAsHome: useAsHome() });
       return false;
     }
     chDebug('home-handoff', { hook: hook, info: info });
     try {
-      FrameDevice.home(function () {
-        try { tizen.application.getCurrentApplication().exit(); } catch (eExit) {}
-      });
+      /* Do not exit: Clean Home is the registered Home app and an exit causes a recovery relaunch. */
+      FrameDevice.home(function (err) { chDebug('home-handoff-done', { err: err ? (err.message || String(err)) : null }); });
     } catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); }
     return true;
   }
@@ -2302,6 +2319,23 @@
         });
       }, function (e) { chDebug('appsinfo-err', String(e)); });
     } catch (e) { chDebug('appsinfo-ex', String(e)); }
+  function layoutAudit() {
+    function R(el) { var r = el.getBoundingClientRect(); return { x: r.left, y: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height, t: (el.textContent || '').replace(/\s+/g, ' ').slice(0, 30) }; }
+    function ov(a, b) { return !(a.r <= b.x + 2 || b.r <= a.x + 2 || a.b <= b.y + 2 || b.b <= a.y + 2); }
+    var page = top().id === 'appearance' ? top().group : top().id, issues = [];
+    var clipEl = document.querySelector(top().id === 'appearance' ? '.appearance-rows' : '.settings-overview');
+    var footEl = document.querySelector(top().id === 'appearance' ? '.appearance-desc' : '.settings-overview-hint');
+    var scene = document.querySelector('.stage.at-appearance .scene');
+    var clip = clipEl && R(clipEl), foot = footEl && footEl.textContent ? R(footEl) : null, prev = scene && R(scene);
+    var els = Array.prototype.map.call(document.querySelectorAll('.appearance-rows .setting-section, .appearance-rows .setting-choice, .appearance-rows .setting-reason, .settings-overview .settings-group'), R).filter(function (e) { return e.w > 0 && e.h > 0; });
+    els.forEach(function (e, i) {
+      var v = clip ? { x: Math.max(e.x, clip.x), y: Math.max(e.y, clip.y), r: Math.min(e.r, clip.r), b: Math.min(e.b, clip.b) } : e;
+      if (foot && v.r - v.x > 2 && v.b - v.y > 2 && ov(v, foot)) issues.push('footer:' + e.t);
+      if (prev && e.x < prev.x && e.r > prev.x + 8) issues.push('preview:' + e.t);
+    });
+    if (clip && foot && clip.b > foot.y + 2) issues.push('clip>footer');
+    return { page: page, n: els.length, clipBottom: clip && Math.round(clip.b), footerY: foot && Math.round(foot.y), previewX: prev && Math.round(prev.x), issues: issues };
+  }
   function perfRun(kind) {
     var seq = [], res = [], i = 0;
     if (kind === 'settings') { goScene('settings'); for (var a = 0; a < 5; a++) seq.push('down'); for (var b = 0; b < 5; b++) seq.push('up'); }
@@ -2352,9 +2386,24 @@
           else if (c === 'back') press('back');
           else if (c === 'ok') press('ok');
           else if (c === 'home') goScene('home');
-          else if (c === 'samsungpage') { goScene('settings'); openAppearance('samsung'); }
-          else if (c === 'bgpage') { goScene('settings'); openAppearance('background'); }
+          else if (c === 'samsungpage') { goScene('settings'); openAppearance('samsung'); render(); }
+          else if (c === 'bgpage') { goScene('settings'); openAppearance('background'); render(); }
           else if (c === 'tvsettings') FrameDevice.settings(function (e) { chDebug('tvsettings', { err: e ? (e.message || String(e)) : null }); });
+          else if (c === 'exit') { chDebug('exit-now', {}); setTimeout(function () { try { tizen.application.getCurrentApplication().exit(); } catch (eX) {} }, 300); return; }
+          else if (c.indexOf('adddock:') === 0) {
+            var addId = c.slice(8), ch = next(S.c.home.slice(), S.c.recent.slice());
+            if (app(addId) && ch.home.indexOf(addId) < 0) { ch.home.push(addId); write(ch, 'Add ' + addId); render(); }
+            chDebug('adddock', { id: addId, known: !!app(addId), dock: S.c.home });
+          }
+          else if (c === 'allkeys') {
+            try {
+              var ks = tizen.tvinputdevice.getSupportedKeys(), got = [];
+              chDebug('allkeys', ks.map(function (k) { return k.name + ':' + k.code; }));
+              ks.forEach(function (k) { if (!/^(ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Enter|Back)$/.test(k.name)) { try { tizen.tvinputdevice.registerKey(k.name); got.push(k.name); } catch (eR) {} } });
+              chDebug('registered', got);
+            } catch (eK) { chDebug('allkeys', String(eK)); }
+          }
+          else if (c === 'layout') { setTimeout(function () { chDebug('layout', layoutAudit()); }, 600); return; }
           else if (c === 'homeon') { setUseAsHome(true); }
           else if (c === 'homeoff') { setUseAsHome(false); }
           else if (c === 'right' || c === 'left' || c === 'up' || c === 'down') press(c);
@@ -2378,6 +2427,7 @@
   refreshCatalog();
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
+  if (!S.loadedFromStorage) setTimeout(function () { retryLoad(1); }, 1200);
   chDebug('launch', { hook: 'start-ready', info: launchInfo(), useAsHome: useAsHome() });
   maybeHandOffHome('start');
 })();

@@ -37,3 +37,13 @@
 
 ## Icons
 - Carries 1.2.3 unified marks (Spotify, Hotstar, Sony LIV, Samsung Internet, SmartThings).
+
+## 1.2.4 hotfix (20 Oct 2026, 20:35 IST): Home toggle and prefs persistence
+- **Home key detection** now uses the data the TV actually sends. Remote Home = `entry_point=smarthub_key` (caller tvctx-manager).
+  `LaunchFromHome=1` / `Entry=launcher` (opening Clean Home from Samsung Home's app row), sdb/app-list launches,
+  `__K_EX_RECOVERY_LAUNCH` and return-to-app launches never hand off. `operation/main` still hands off.
+- **Handoff no longer exits Clean Home.** Exiting the registered Home app made the TV start a recovery relaunch.
+  The handoff now only brings up Samsung Home (com.samsung.tv.csfs).
+- **Prefs no longer reset.** Boot never writes defaults over storage when the read comes back empty; it retries the read
+  instead. Every save is mirrored to `cleanhome.home.v1.bak` / `cleanhome.homepref.bak` and read back, and saves are synchronous localStorage writes.
+- Debug-only commands: `adddock:<appId>`, `exit`. Removed `simhome`.

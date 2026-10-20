@@ -69,15 +69,9 @@
     tryIds();
   }
   /* Candidates verified/tried on UA43DU7660; launchChain stops at the first that opens. */
-  var TV_SETTINGS = [
-    'com.samsung.tv.coba.setting',
-    'com.samsung.tv.quicksetting',
-    'org.tizen.menu',
-    'org.tizen.homesetting',
-    'com.samsung.tv.quickpanel',
-    'com.samsung.tv.floating-menu',
-    'com.samsung.tv.broadcastingmenu'
-  ];
+  /* Verified on UA43DU7660 (20 Oct 2026, aul STATUS_FOCUS): org.tizen.menu (Settings overlay), quickpanel.
+     com.samsung.tv.coba.setting launches but never runs; homesetting fails. */
+  var TV_SETTINGS = ['org.tizen.menu', 'com.samsung.tv.quickpanel'];
   function settings(done) {
     launchChain(TV_SETTINGS, done, 'Could not open TV settings. Use the remote Settings/Home key.');
   }

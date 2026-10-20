@@ -60,6 +60,7 @@ for dock_icon in ['hdmi','youtube','netflix','zee5','primevideo','hotstar','sony
 assert 'function maybeHandOffHome' in main and 'function useAsHome' in main
 assert 'isHomeTriggeredLaunch' in main and 'maybeHandOffHome' in main
 assert 'samsung.useAsHome' in main
+assert "HOME_PREF_KEY = 'cleanhome.homepref'" in main, 'Home toggle must not share the config key'
 # Soft handoff must never redirect an app-list (default) launch.
 assert "org.tizen.tv-viewer" in (app / 'device.js').read_text()
 print('Widget identity, version and bundled resources are valid.')

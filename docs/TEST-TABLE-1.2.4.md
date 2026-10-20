@@ -29,3 +29,15 @@ Times in Asia/Calcutta (IST). TV: UA43DU7660KLXL.
 ## Mechanism notes
 - **Home toggle:** soft `localStorage` flag. Native Home was already `KsHome0001.CleanHome` on last query (`db/appfw/home_appid`). Off = hand off Home-triggered launches to `com.samsung.tv.csfs`. On = stay. PC `run_mode.py apply/restore` still owns vconf.
 - **TV Plus:** not remappable with the Home-style vconf method found so far.
+
+## Hotfix live results (20 Oct 2026, IST, UA43DU7660 192.168.1.136)
+| Test | Result | Evidence |
+|---|---|---|
+| Detection rule vs real launch data (Home key / app row / sdb / recovery / return) | PASS | only smarthub_key and operation/main hand off (node check on logged data) |
+| Spotify restored to dock | PASS | 20:31:37 dock = hdmi,youtube,netflix,zee5,primevideo,hotstar,sonyliv,browser,rJeHak5zRg.Spotify |
+| Toggle Off persists (write and readback) | PASS | 20:31:40 home-pref useAsHome:false readback:false |
+| Forced exit #1 → recovery relaunch keeps prefs | PASS | 20:34:06 prefs-load found:true hasSpotify:true; state useAsHome:false; new pid 3650 |
+| Forced exit #2 → recovery relaunch keeps prefs | PASS | 20:34:38 same; new pid 1677 |
+| Recovery launch does not hand off | PASS | home-handoff-skip reason not-home-launch |
+| `0 kill` as a restart method | N/A | TV returns "General error [-1]"; used the in-app exit (real process exit) instead |
+| Real remote Home with toggle Off → Samsung Home | PENDING | needs Kunal's press |
