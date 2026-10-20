@@ -980,6 +980,7 @@
       reason: flat ? 'Choose Photo in Background to use rotation.' : 'Timed changes pause while Settings or another panel is open.' }];
     return [{ id: 'samsung', title: '', items: [
       { action: 'samsung.useAsHome', label: 'Use Clean Home as Home screen', description: useAsHome() ? 'On \u2014 Home button opens Clean Home' : 'Off \u2014 Home button opens Samsung Home', toggle: true, applied: useAsHome() },
+      { action: 'samsung.tvPlusYouTube', label: 'TV Plus button opens YouTube', description: tvPlusYouTubeOn() ? 'On \u2014 TV Plus launches YouTube' : 'Off \u2014 TV Plus opens Samsung TV Plus', toggle: true, applied: tvPlusYouTubeOn() },
       { action: 'samsung.home', label: 'Open Samsung Home', description: 'Open Samsung\u2019s Home screen now' },
       { action: 'samsung.settings', label: 'TV settings', description: 'Picture, sound and network settings' }
     ] }];
@@ -1038,6 +1039,7 @@
     else if (item.action === 'background.bingToday') todayBingPhoto();
     else if (item.action === 'background.rotation') openAppearance('rotation');
     else if (item.action === 'samsung.useAsHome') { setUseAsHome(!useAsHome()); render(); }
+    else if (item.action === 'samsung.tvPlusYouTube') { setTvPlusYouTube(!tvPlusYouTubeOn()); render(); }
     else if (item.action === 'samsung.home') perform('Samsung Home', FrameDevice.home);
     else if (item.action === 'samsung.settings') perform('TV settings', FrameDevice.settings);
   }
@@ -2328,6 +2330,14 @@
     try { localStorage.setItem(HOME_PREF_KEY, JSON.stringify(p)); localStorage.setItem(HOME_PREF_KEY + '.bak', JSON.stringify(p)); } catch (e) {}
     chDebug('home-pref', { useAsHome: !!on, readback: useAsHome() });
   }
+  /* TV Plus button -> YouTube. Default On. Survives via Clean Home (startup_appid) + background-support. */
+  function tvPlusYouTubeOn() { return readHomePref().tvPlusYouTube !== false; }
+  function setTvPlusYouTube(on) {
+    var p = readHomePref(); p.tvPlusYouTube = !!on;
+    try { localStorage.setItem(HOME_PREF_KEY, JSON.stringify(p)); localStorage.setItem(HOME_PREF_KEY + '.bak', JSON.stringify(p)); } catch (e) {}
+    chDebug('tvplus-pref', { on: !!on });
+    if (on) tvPlusWatchArm('pref-on'); else tvPlusWatchDisarm();
+  }
   /* Measured on UA43DU7660 (20 Oct 2026):
      - Remote Home key  -> caller tvctx-manager, data entry_point=smarthub_key (op default).
      - Opened from Samsung Home's app row -> LaunchFromHome=1, CallerId=com.samsung.tv.home.media. App-list: never redirect.
@@ -2388,6 +2398,62 @@
   }, 500);
   if (window.__CH_EARLY) setTimeout(function () { handoffShow('early-safety-1s'); }, 1000);
 
+  /* ---------- TV Plus -> YouTube (in-app, PC-independent) ----------
+     background-support is on in config.xml. While we are hidden we poll getAppsContext
+     (~150 ms). On blur/hide we also check immediately (race before the TV suspends us).
+     If HEP newly appears, launch YouTube and try to kill HEP. Debounced. */
+  var HEP_ID = 'HEPsqFNie0.tvplusstandalone';
+  var YT_ID = '9Ur5IzDKqV.TizenYouTube';
+  var YT_FB = 'com.samsung.tv.cobalt-yt';
+  var TPW = { timer: null, hadHep: false, cooling: false, ticks: 0 };
+  function tvPlusWatchDisarm() {
+    if (TPW.timer) { clearInterval(TPW.timer); TPW.timer = null; }
+  }
+  function tvPlusRedirect(why) {
+    if (!tvPlusYouTubeOn() || TPW.cooling) return;
+    TPW.cooling = true;
+    chDebug('tvplus-remap', { why: why, ticks: TPW.ticks });
+    try {
+      tizen.application.launch(YT_ID, function () {
+        chDebug('tvplus-remap', { launched: YT_ID });
+      }, function () {
+        try { tizen.application.launch(YT_FB, function () { chDebug('tvplus-remap', { launched: YT_FB }); }, function (e) { chDebug('tvplus-remap', { launchErr: String(e) }); }); } catch (e2) {}
+      });
+    } catch (e) {
+      try { tizen.application.launch(YT_FB, function () {}, function () {}); } catch (e3) {}
+    }
+    try { FrameDevice.killApp(HEP_ID, function (err) { chDebug('tvplus-remap', { kill: err ? (err.message || String(err)) : 'ok' }); }); } catch (e4) {}
+    setTimeout(function () { TPW.cooling = false; }, 2200);
+  }
+  function tvPlusCheck(why) {
+    if (!tvPlusYouTubeOn() || !window.tizen || !tizen.application) return;
+    try {
+      tizen.application.getAppsContext(function (list) {
+        var i, now = false;
+        for (i = 0; i < (list || []).length; i++) if (list[i] && list[i].appId === HEP_ID) { now = true; break; }
+        if (now && !TPW.hadHep) tvPlusRedirect(why || 'appear');
+        TPW.hadHep = now;
+      }, function () {});
+    } catch (e) {}
+  }
+  function tvPlusWatchArm(why) {
+    if (!tvPlusYouTubeOn()) return;
+    tvPlusCheck(why || 'arm');
+    if (TPW.timer) return;
+    TPW.timer = setInterval(function () {
+      if (!tvPlusYouTubeOn()) { tvPlusWatchDisarm(); return; }
+      /* Only poll fast while hidden/backgrounded; when visible, blur handler re-arms. */
+      if (!document.hidden && !document.webkitHidden) return;
+      TPW.ticks++;
+      tvPlusCheck('poll');
+    }, 150);
+    chDebug('tvplus-watch', { armed: true, why: why || '' });
+  }
+  window.addEventListener('blur', function () {
+    if (!tvPlusYouTubeOn()) return;
+    tvPlusWatchArm('blur');
+  });
+
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
   function launchInfo() {
     var o = {};
@@ -2424,10 +2490,18 @@
     if (away > 1000 && S.stack.length > 1) resetToMain('focus');
   });
   chDebug('launch', { hook: 'start', info: launchInfo() });
+  try { if (document.hidden || document.webkitHidden) tvPlusWatchArm('start-hidden'); else if (tvPlusYouTubeOn()) tvPlusCheck('start'); } catch (eTPW) {}
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
-    if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); if (!useAsHome()) { HANDOFF.at = 0; handoffHide(); } /* resume frame starts black; legit shows undo it at the first hook */ }
-    else { release(); if (!onEntry('visible')) resetToMain('visible'); updateClock(); }
+    if (document.hidden) {
+      pauseRotation(); clearTimeout(clockTimer);
+      if (!useAsHome()) { HANDOFF.at = 0; handoffHide(); } /* resume frame starts black; legit shows undo it at the first hook */
+      tvPlusWatchArm('hidden');
+    } else {
+      release(); if (!onEntry('visible')) resetToMain('visible'); updateClock();
+      /* Stay armed but poll no-ops while visible; reset HEP edge so a later press can re-trigger. */
+      TPW.hadHep = false;
+    }
   });
   window.addEventListener('resize', fit);
  

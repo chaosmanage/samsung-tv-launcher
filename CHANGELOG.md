@@ -2,6 +2,20 @@
 
 All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade steps: [docs/UPDATE.md](docs/UPDATE.md).
 
+## 1.2.7 (2026-10-20)
+
+### Added
+- **TV Plus button opens YouTube** (Settings → Samsung, default On). While Clean Home is in the
+  background (`background-support` already enabled), it watches running apps via
+  `getAppsContext` (~150 ms while hidden) and on blur/hide. When
+  `HEPsqFNie0.tvplusstandalone` newly appears, it launches YouTube and tries to kill HEP.
+  Works with the PC off (Clean Home is `startup_appid`). Toggle-Off Home handoff unchanged.
+- `FrameDevice.getRunningMap` / `killApp` helpers.
+
+### Changed
+- PC Task Scheduler re-arm is **not required**; shell `tvplus-watcher/` remains optional/manual only.
+- Widget version 1.2.7.
+
 ## 1.2.6 (2026-10-20)
 
 ### Fixed

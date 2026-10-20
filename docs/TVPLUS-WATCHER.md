@@ -9,3 +9,8 @@ See [`../tvplus-watcher/README.md`](../tvplus-watcher/README.md).
 - Persistence: PC re-arm script (Clean Home web app cannot spawn the shell; UEP blocks unsigned files).
 - Timings: prefer real TV Plus presses; watcher logs `DETECT` / `DONE act_ms=` under
   `/home/owner/share/tmp/sdk_tools/tvplus-remap/watch.log`.
+
+## 1.2.7 in-app redirect (preferred)
+
+Clean Home itself redirects TV Plus → YouTube with the PC off. Shell watcher + PC re-arm
+are optional only. See CHANGELOG 1.2.7.
