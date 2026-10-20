@@ -1,3 +1,9 @@
+## 1.2.4 notes
+
+- Use **Settings → Samsung → Use Clean Home as Home screen** to choose whether the remote Home button stays on Clean Home or hands off to Samsung Home. Opening Clean Home from the app list always works.
+- Back on the main dock no longer asks to leave; use the header **Samsung Home** control.
+- See `docs/CHANGELOG-1.2.4.md`.
+
 # Install Clean Home 1.2.3 on a Samsung TV (Windows)
 
 This installs **Clean Home** (`KsHome0001.CleanHome`) on a 2024 Samsung Tizen TV from a Windows PC.
