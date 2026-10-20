@@ -118,7 +118,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .native-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .native-icon.has-native-icon>span{visibility:hidden}
 .tile .mark{position:absolute;left:84px;top:34px;opacity:.92;transition:opacity 160ms linear,transform var(--t) var(--ease)}
-.tile .mark.bundled-icon{left:50%;top:12px;margin-left:-56px;width:112px!important;height:112px!important;opacity:1;border-radius:26px;overflow:hidden;background:transparent!important;box-shadow:0 6px 18px rgba(0,0,0,.28)!important;transform-origin:50% 0}
+.tile .mark.bundled-icon{left:50%;top:12px;margin-left:-56px;width:112px!important;height:112px!important;opacity:1;border-radius:26px;overflow:hidden;background:transparent!important;box-shadow:none!important;transform-origin:50% 0}
 .a-icons .tile .mark.bundled-icon{margin-left:-44px!important;top:28px;width:88px!important;height:88px!important;border-radius:22px}
 .tile .mark.bundled-icon img{position:relative;inset:auto;width:100%;height:100%;object-fit:cover;display:block;border-radius:26px;background:transparent!important}
 .tile.is-focus .mark.bundled-icon,.tile.is-lifted .mark.bundled-icon{transform:translateY(-4px) scale(1.04)}
@@ -308,7 +308,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .f-type .sheet .sc.is-lifted .panel-content,.f-type .sheet .er.is-lifted .panel-content{transform:none}
 
 /* Settings overview: each group carries one short, committed summary. */
-.settings-overview{position:absolute;left:112px;top:212px;width:1056px}
+.settings-overview{position:absolute;left:112px;top:212px;width:1056px;max-height:720px;overflow-y:auto;padding-bottom:12px;box-sizing:border-box}
 .settings-group{width:100%;height:112px;padding:12px 32px 12px 28px;border-radius:20px;display:flex;align-items:center;justify-content:space-between;gap:32px;color:var(--ink);transition:background-color 140ms linear,color 140ms linear}
 .settings-group+.settings-group{margin-top:8px}
 .settings-group-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
@@ -388,7 +388,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .bg-light{--mute:rgba(29,26,22,.70);--faint:rgba(29,26,22,.52);--line:rgba(29,26,22,.14);--knock:#f2efe8;--solid-mute:rgba(242,239,232,.72);--solid-warn:#e8b36a;--ground:#f2efe8;--ink:#1d1a16;--warn:#8a4b00;--solid:#1d1a16;--solid-ink:#f2efe8;--plate:rgba(29,26,22,.07);--plate-edge:none;--lift:rgba(29,26,22,.13);--tr-peer:.52;--br-peer:.52}
 .bg-dark{--mute:rgba(246,241,231,.72);--faint:rgba(246,241,231,.50);--line:rgba(246,241,231,.14);--knock:#0d0d0d;--solid-mute:rgba(29,26,22,.68);--solid-warn:#8a4b00;--warn:#e8b36a;--plate:rgba(246,241,231,.08);--plate-edge:inset 0 1px 0 rgba(255,250,240,.1);--lift:rgba(246,241,231,.15)}
 .scene{position:absolute;left:0;top:0;width:1920px;height:1080px;background:var(--ground);overflow:hidden;transform-origin:0 0}
-.at-appearance .scene,.at-wallpaper .scene{z-index:2;transform:translate3d(858px,288px,0) scale(.48);border-radius:32px;pointer-events:none}
+.at-appearance .scene,.at-wallpaper .scene{z-index:2;left:858px;top:288px;width:1920px;height:1080px;transform:scale(.48);transform-origin:0 0;border-radius:32px;overflow:hidden;pointer-events:none;box-shadow:0 12px 40px rgba(0,0,0,.35)}
 .bg-dark.at-appearance .scene,.bg-light.at-appearance .scene{box-shadow:0 0 0 4px var(--line)}
 .l-list .caption{left:auto;right:140px;top:112px;align-items:flex-end;text-align:right;max-width:880px}
 .l-list.at-arrange .caption{top:72px}
@@ -492,8 +492,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .appearance{position:absolute;z-index:3;inset:0;color:var(--ink);pointer-events:none}
 .settings-back{position:absolute;left:124px;top:60px;pointer-events:auto}
 .settings-title{position:absolute;left:140px;top:132px;font-size:56px;line-height:68px;font-weight:500;letter-spacing:-1.6px}
-.appearance-rows{position:absolute;left:140px;top:244px;width:640px;pointer-events:auto}
-.setting-section+.setting-section{margin-top:32px}
+.appearance-rows{position:absolute;left:140px;top:244px;width:640px;max-height:684px;overflow-x:hidden;overflow-y:auto;padding-bottom:24px;pointer-events:auto;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+.setting-section+.setting-section{margin-top:28px}
+.setting-section{padding-bottom:4px}
 .setting-label{margin-bottom:12px;font-size:28px;line-height:36px;font-weight:500;letter-spacing:-.2px;color:var(--mute)}
 .setting-options{display:flex;flex-direction:column;gap:4px}
 .setting-choice{position:relative;display:flex;align-items:center;gap:16px;width:100%;min-height:78px;padding:12px 24px;border-radius:18px;font-size:38px;line-height:48px;font-weight:500;letter-spacing:-.5px;color:var(--ink);transition:background-color 140ms linear,color 140ms linear}
@@ -501,7 +502,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .setting-choice.is-disabled{color:var(--faint)}
 .setting-choice.is-disabled.is-focus{color:var(--solid-mute)}
 .setting-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
-.setting-name{display:block;white-space:nowrap}
+.setting-name{display:block;white-space:normal;overflow-wrap:anywhere}
 .setting-tick{display:flex;align-items:center;justify-content:center;flex:none;width:30px;height:32px;margin-left:0}
 .setting-tick .ico{width:30px;height:30px;stroke-width:2.2}
 .setting-forward{width:28px;height:28px;margin-left:auto;flex:none}
@@ -509,13 +510,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .setting-choice.is-disabled .setting-swatch{opacity:.5}
 .swatch-light{background:#f2efe8;box-shadow:inset 0 0 0 1px rgba(29,26,22,.12)}
 .swatch-dark{background:#0d0d0d;box-shadow:inset 0 0 0 1px rgba(246,241,231,.15)}
-.setting-reason{margin-top:16px;font-size:26px;line-height:36px;color:var(--mute)}
+.setting-reason{margin:12px 0 8px;max-width:100%;font-size:24px;line-height:34px;color:var(--mute);white-space:normal;overflow-wrap:anywhere}
 .is-horizontal .setting-options{flex-direction:row;gap:12px}
 .is-horizontal .setting-choice{flex:1;min-width:0;min-height:92px;padding:12px 20px;gap:16px;font-size:36px}
 .is-horizontal .setting-tick{width:26px;margin-left:0}
 .is-horizontal .setting-tick .ico{width:26px;height:26px}
 .section-material .setting-choice:last-child{flex:1.4}
 .detail-background .section-rotation .setting-choice{padding-left:128px}
+.detail-background .setting-section+.setting-section{margin-top:16px}
+.detail-background .setting-choice{min-height:70px;padding:10px 20px}
+.detail-background .setting-choice.has-description{min-height:96px}
+.detail-background .setting-label{margin-bottom:8px}
 .detail-layout .setting-section+.setting-section,.detail-focus .setting-section+.setting-section{margin-top:64px}
 .detail-typography .setting-choice,.detail-rotation .setting-choice{min-height:88px}
 .detail-typography .appearance-rows,.detail-rotation .appearance-rows,.detail-samsung .appearance-rows{top:260px}
@@ -619,9 +624,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .mark.bundled-icon img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;background:transparent!important}
 .mark.bundled-icon.monogram{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);border-radius:28px}
 
-/* v1.2.3: one live wallpaper everywhere. Glass layers blur the SAME image via CSS. */
-.sheet-bg.is-live-glass{filter:blur(44px) saturate(1.05) brightness(.72);-webkit-filter:blur(44px) saturate(1.05) brightness(.72);transform:scale(1.08)}
-.ph-field-img.is-live-glass{filter:blur(32px) saturate(1.06) brightness(.9);-webkit-filter:blur(32px) saturate(1.06) brightness(.9)}
+/* v1.2.4: glass uses a single pre-blurred downscaled bitmap (no runtime CSS blur). */
+.sheet-bg.is-preblur,.ph-field-img.is-preblur,.mat-img.is-preblur{filter:none;-webkit-filter:none}
+.sheet-bg.is-preblur{transform:scale(1.06)}
 /* v1.2.3: All apps grid. Fixed 96px icon, label 18px below it, status line under the label. No overlap at any focus scale. */
 .gt .mark{left:50%!important;top:14px!important;margin-left:-48px;width:96px!important;height:96px!important;transform-origin:50% 0}
 .gt .mark.bundled-icon{border-radius:22px;overflow:hidden;background:transparent!important}
@@ -630,11 +635,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .gt .label{top:128px;height:40px;font-size:30px;line-height:40px;letter-spacing:-.3px}
 .gt .state{top:170px;height:34px;font-size:26px;line-height:34px}
 
-/* v1.2.3 CleanFrame glass: live wallpaper, light blur, CleanFrame scrim + veil (no milky frost). */
-.mat-img.is-live-glass{filter:blur(18px) saturate(1.1) brightness(.82);-webkit-filter:blur(18px) saturate(1.1) brightness(.82);transform:scale(1.02);transform-origin:960px 792px}
+/* v1.2.4 CleanFrame glass: pre-blurred bitmap + light veil (no milky frost, no CSS blur). */
+.mat-img.is-preblur{transform:scale(1.02);transform-origin:960px 792px}
 /* Single-ink marks: same white as the clock/labels, no tiles behind them. */
 .tile .mark:not(.bundled-icon),.gt .mark:not(.bundled-icon),.er .mark:not(.bundled-icon){color:var(--ink,#fff);background:none}
-.mat-img.is-live-glass{filter:blur(16px) saturate(1.08) brightness(.9);-webkit-filter:blur(16px) saturate(1.08) brightness(.9)}
 .bg-photo .mat-scrim{display:none}
 .bg-photo .mat-veil,.bg-photo.tone-light .mat-veil{background:rgba(8,14,18,.12)}
 
@@ -643,3 +647,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .mark.native-mark img{position:absolute;object-fit:contain;border-radius:22%}
 .mark.native-mark.monogram{text-align:center;font-weight:600;letter-spacing:-.5px;color:var(--ink,#fff)}
 .mark.native-mark.monogram>span{display:block}
+
+.setting-choice.is-toggle .setting-forward{display:none}
+.setting-choice.is-toggle .setting-tick{margin-left:auto}
+.setting-choice.is-toggle.is-applied .setting-tick{opacity:1}
+
+/* v1.2.4 motion: transform/opacity only on focus; spare the compositor */
+.tile,.gt,.settings-group,.setting-choice{will-change:auto}
+.tile.is-focus .tile-content,.f-type .tile.is-focus .tile-content{transition:transform 120ms var(--ease),opacity 120ms linear}
+.at-appearance .scene,.at-wallpaper .scene{will-change:auto}

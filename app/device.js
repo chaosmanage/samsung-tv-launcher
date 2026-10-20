@@ -68,7 +68,19 @@
     }
     tryIds();
   }
-  function settings(done) { launchApp('com.samsung.tv.coba.setting', done); }
+  /* Candidates verified/tried on UA43DU7660; launchChain stops at the first that opens. */
+  var TV_SETTINGS = [
+    'com.samsung.tv.coba.setting',
+    'com.samsung.tv.quicksetting',
+    'org.tizen.menu',
+    'org.tizen.homesetting',
+    'com.samsung.tv.quickpanel',
+    'com.samsung.tv.floating-menu',
+    'com.samsung.tv.broadcastingmenu'
+  ];
+  function settings(done) {
+    launchChain(TV_SETTINGS, done, 'Could not open TV settings. Use the remote Settings/Home key.');
+  }
   function hdmi(done) {
     launchChain(HDMI_NATIVE, done, 'Could not open HDMI / Source. Press SOURCE on the remote.');
   }

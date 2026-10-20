@@ -76,8 +76,7 @@ set WGT="C:\Users\Kunal\CleanHome\dist\Clean Home.wgt"
 
 Expected output: `app_id[KsHome0001.CleanHome] install completed` and `successfully launched pid = ...`.
 
-- **Upgrade to 1.2.3 in place** (same `vd_appinstall` command as a fresh install): pull or extract this tree, rebuild
-  the `.wgt` (section E), then run the three lines above. Keeps your dock, settings and optional Home-button takeover.
+- **Upgrade in place** (same command): keeps your dock, settings and the Home-button takeover.
 - **Uninstall** (`0 vd_appuninstall KsHome0001.CleanHome`) resets the Home button to Samsung Home. If you used section G, re-run `apply` after reinstalling.
 
 You should now see the CleanFrame-style glass dock (HDMI, YouTube, Netflix, ZEE5, Prime Video, JioHotstar, Sony LIV, Internet) and Samsung Home / All apps / Settings at the top right.
@@ -112,4 +111,3 @@ Without takeover you can still use **Settings → General & Privacy → Start Sc
 | An app shows a monogram | The TV only ships the Tizen placeholder icon for it; Clean Home deliberately shows a monogram instead |
 | Bing photo missing | TV offline or Bing unreachable; the bundled wallpaper is used automatically |
 | Home key goes to Samsung Home after reinstall | Uninstall resets it; re-run section G `apply` |
-| Home does nothing inside Clean Home **Settings** | Platform limit on tested 2024 TVs: no intercept while Settings is open; use **Back** or header **Samsung Home** ([test table](docs/TEST-TABLE-1.2.3.md)) |

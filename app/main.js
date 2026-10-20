@@ -633,7 +633,7 @@
       }
       f.zone = 'apps';
       if (k === x.out) { f.zone = 'util'; f.u = clamp(S.lastUtil, 0, U.length - 1); }
-      else if (k === 'back') openMessage('leave');
+      else if (k === 'back') return; /* stay on Clean Home; header Samsung Home is the exit */
       else if (!h.length) { if (k === 'ok') addAppsRoute(); }
       else if (k === x.prev && i > 0) setSel(h[i - 1]);
       else if (k === x.next && i < h.length - 1) setSel(h[i + 1]);
@@ -662,7 +662,7 @@
     if (k === 'up' && i > 0) setSel(h[i - 1]);
     else if (k === 'right') { f.zone = 'util'; f.u = clamp(S.lastUtil, 0, U.length - 1); }
     else if (k === 'down' && i < h.length - 1) setSel(h[i + 1]);
-    else if (k === 'back') openMessage('leave');
+    else if (k === 'back') return;
     else if (k === 'ok') { if (h.length) launch(S.sel); else addAppsRoute(); }
   }
 
@@ -914,7 +914,7 @@
       { id: 'typography', label: 'Typography', value: FONTS[S.c.font].name },
       { id: 'focus', label: 'Focus', value: VALUE_NAMES[S.c.focus] + (materialApplies() ? ', ' + VALUE_NAMES[S.c.material] : '') },
       { id: 'editor', label: 'Apps on Home', value: n + (n === 1 ? ' app' : ' apps') },
-      { id: 'samsung', label: 'Samsung', value: 'Home and TV settings' }];
+      { id: 'samsung', label: 'Samsung', value: useAsHome() ? 'Clean Home is Home' : 'Samsung Home is Home' }];
   }
   function settingsIds() { return settingsRows().map(function (r) { return r.id; }); }
   V.settings = {
@@ -945,8 +945,8 @@
     if (t.group === 'background') return [
       { id: 'bg', title: 'Background type', items: options('bg', ['photo', 'light', 'dark']) },
       { id: 'wall', title: 'Wallpaper', items: [{ action: 'background.wallpaper', label: S.c.dailyBing && BING.url ? 'Bing daily photo \u2014 pick one to replace it' : wall(S.c.wall).name, thumbnail: true, disabled: flat }] },
-      { id: 'daily', title: 'Daily photo', items: [{ action: 'background.daily', label: S.c.dailyBing ? 'Bing daily (on)' : 'Off \u2014 use chosen wallpaper', disabled: flat }], reason: flat ? 'Choose Photo to use the daily Bing photo.' : 'Loads today\u2019s Bing photo as a live URL. Nothing is saved to the TV.' },
-      { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }], reason: flat ? 'Choose Photo to use wallpaper and rotation.' : '' }
+      { id: 'daily', title: 'Daily photo', items: [{ action: 'background.daily', label: S.c.dailyBing ? 'Bing daily (on)' : 'Off \u2014 use chosen wallpaper', disabled: flat, description: flat ? 'Choose Photo first' : 'Live URL only; nothing saved to the TV' }] },
+      { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }] }
     ];
     if (t.group === 'layout') return [
       { id: 'layout', title: 'Layout', horizontal: true, items: options('layout', ['list', 'dock']) },
@@ -962,6 +962,7 @@
     if (t.group === 'rotation') return [{ id: 'mode', title: '', items: options('mode', MODES.map(function (m) { return m.id; }), flat),
       reason: flat ? 'Choose Photo in Background to use rotation.' : 'Timed changes pause while Settings or another panel is open.' }];
     return [{ id: 'samsung', title: '', items: [
+      { action: 'samsung.useAsHome', label: 'Use Clean Home as Home screen', description: useAsHome() ? 'On \u2014 Home button opens Clean Home' : 'Off \u2014 Home button opens Samsung Home', toggle: true, applied: useAsHome() },
       { action: 'samsung.home', label: 'Open Samsung Home', description: 'Open Samsung\u2019s Home screen now' },
       { action: 'samsung.settings', label: 'TV settings', description: 'Picture, sound and network settings' }
     ] }];
@@ -1017,6 +1018,7 @@
       }
     }
     else if (item.action === 'background.rotation') openAppearance('rotation');
+    else if (item.action === 'samsung.useAsHome') { setUseAsHome(!useAsHome()); render(); }
     else if (item.action === 'samsung.home') perform('Samsung Home', FrameDevice.home);
     else if (item.action === 'samsung.settings') perform('TV settings', FrameDevice.settings);
   }
@@ -1067,10 +1069,16 @@
 
   /* ---------- Dispatch ---------- */
   function norm() { var t = top(), v = V[t.id]; if (v.norm) v.norm(t); }
+  var lastNavAt = 0;
   function press(k) {
+    var t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(), dt;
     if (FrameDevice.isHdmi && FrameDevice.isHdmi() && (k === 'back' || k === 'ok')) {
       FrameDevice.exitHdmi(function () { render(); });
       return;
+    }
+    if (k === 'left' || k === 'right' || k === 'up' || k === 'down') {
+      if (t0 - lastNavAt < 40) return; /* coalesce key-repeat on ARMv7 */
+      lastNavAt = t0;
     }
     norm();
     var t = top();
@@ -1078,6 +1086,8 @@
     norm();
     render();
     syncRotation();
+    dt = ((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0;
+    if (CH_DEBUG_URL) chDebug('perf', { k: k, ms: Math.round(dt * 10) / 10, view: top().id, depth: S.stack.length });
   }
 
   /* ---------- Rendering ---------- */
@@ -1251,25 +1261,92 @@
     var d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
   }
-  /* ONE active wallpaper for every surface: stage photo, dock glass, Settings/All apps
-     backdrop and every list/utility glass field. Source = today's Bing URL when Daily
-     Bing is on and loaded, else the chosen bundled wall. Glass layers blur this same
-     image with CSS; no pre-blurred stock materials are used. Nothing is written to disk. */
+  /* ONE sharp wallpaper (photo) + ONE in-memory pre-blurred glass copy for all glass surfaces.
+     Glass is generated once per wallpaper change on a downscaled canvas (no CSS filter blur on
+     full-res layers — that was the main ARMv7 cost). Nothing is written to the TV disk. */
   var WALL_CONSUMERS = ['photo', 'mat', 'bg', 'field', 'fieldAlt', 'utility', 'utilityAlt'];
+  var GLASS = { src: '', url: '', gen: 0, blob: '' };
   function activeWallpaperSrc() {
     if (S.c && S.c.dailyBing && BING.url) return BING.url;
     return WP + ((S.c && S.c.wall) || (WALLS[0] && WALLS[0].id)) + '.jpg';
   }
+  function revokeGlassBlob() {
+    if (GLASS.blob) { try { URL.revokeObjectURL(GLASS.blob); } catch (e) {} GLASS.blob = ''; }
+  }
+  function paintGlass(src, done) {
+    if (GLASS.src === src && GLASS.url) { done(GLASS.url); return; }
+    var gen = ++GLASS.gen, t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    function fail(why) {
+      chDebug('glass-blur', { ok: false, why: String(why).slice(0, 80), src: src });
+      GLASS.src = src; GLASS.url = src; done(src);
+    }
+    function fromImage(im) {
+      if (gen !== GLASS.gen) return;
+      try {
+        var w = 480, h = 270, pad = 24;
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        if (!ctx) { fail('no-2d'); return; }
+        if (typeof ctx.filter === 'string') {
+          ctx.filter = 'blur(14px) saturate(1.08) brightness(0.9)';
+          ctx.drawImage(im, -pad, -pad, w + pad * 2, h + pad * 2);
+          ctx.filter = 'none';
+        } else {
+          ctx.drawImage(im, 0, 0, w, h);
+          ctx.globalAlpha = 0.55;
+          ctx.drawImage(c, -3, 0, w, h);
+          ctx.drawImage(c, 3, 0, w, h);
+          ctx.drawImage(c, 0, -2, w, h);
+          ctx.globalAlpha = 1;
+        }
+        var url = c.toDataURL('image/jpeg', 0.7);
+        revokeGlassBlob();
+        GLASS.src = src; GLASS.url = url;
+        chDebug('glass-blur', { ok: true, ms: Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - t0), w: w, h: h, bytes: url.length });
+        done(url);
+      } catch (e) { fail(e); }
+    }
+    function loadUrl(u) {
+      var im = new Image();
+      im.onload = function () { fromImage(im); };
+      im.onerror = function () { fail('img-error'); };
+      im.src = u;
+    }
+    if (/^https?:/i.test(src) && typeof fetch === 'function') {
+      fetch(src).then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.blob();
+      }).then(function (blob) {
+        if (gen !== GLASS.gen) return;
+        revokeGlassBlob();
+        GLASS.blob = URL.createObjectURL(blob);
+        loadUrl(GLASS.blob);
+      })['catch'](function (e) { loadUrl(src); });
+    } else {
+      loadUrl(src);
+    }
+  }
+  function setGlassClass(im) {
+    im.className = (im.className || '').replace(/\bis-live-glass\b/g, '').replace(/\bis-preblur\b/g, '').replace(/\s+/g, ' ').trim() + ' is-preblur';
+  }
   function applyWallpaperEverywhere(src) {
     var changed = false;
     src = src || activeWallpaperSrc();
-    WALL_CONSUMERS.forEach(function (k) {
-      var im = IMG[k] || null;
-      if (!im) return;
-      if (im.getAttribute('data-live') !== src) { im.setAttribute('data-live', src); im.src = src; changed = true; }
-      if (k !== 'photo' && im.className.indexOf('is-live-glass') < 0) im.className += ' is-live-glass';
+    var photo = IMG.photo;
+    if (photo) {
+      if (photo.getAttribute('data-live') !== src) { photo.setAttribute('data-live', src); photo.src = src; changed = true; }
+      photo.className = (photo.className || '').replace(/\bis-live-glass\b/g, '').replace(/\bis-preblur\b/g, '').replace(/\s+/g, ' ').trim();
+    }
+    paintGlass(src, function (glassSrc) {
+      WALL_CONSUMERS.forEach(function (k) {
+        if (k === 'photo') return;
+        var im = IMG[k]; if (!im) return;
+        setGlassClass(im);
+        if (im.getAttribute('data-live') !== glassSrc) { im.setAttribute('data-live', glassSrc); im.src = glassSrc; changed = true; }
+      });
+      if (changed) chDebug('wallpaper', { src: src, glass: glassSrc === src ? 'fallback-sharp' : 'preblur', consumers: WALL_CONSUMERS.map(function (k) { return k + '=' + (IMG[k] ? (IMG[k].className.indexOf('is-preblur') >= 0 ? 'preblur' : 'photo') : 'none'); }) });
     });
-    if (changed) chDebug('wallpaper', { src: src, consumers: WALL_CONSUMERS.map(function (k) { return k + '=' + (IMG[k] ? IMG[k].getAttribute('data-live') === src : 'none'); }) });
   }
   function syncGlassFromSrc(src) { applyWallpaperEverywhere(src); }
   function applyBingPhoto(url) { if (url && S.c && S.c.dailyBing) applyWallpaperEverywhere(url); }
@@ -1644,8 +1721,9 @@
             : '<img class="setting-swatch" src="' + esc(S.c.dailyBing && BING.url ? BING.url : WP + S.c.wall + '-thumb.jpg') + '" alt="">';
           body += '<span class="setting-copy"><span class="setting-name">' + esc(item.label) + '</span>'
             + (item.description ? '<span class="setting-description">' + esc(item.description) + '</span>' : '') + '</span>';
-          if (!item.axis) body += icon('right', 'setting-forward');
-          return command(item, body, item.description ? 'has-description' : '');
+          if (item.toggle) body += '<span class="setting-tick" aria-hidden="true">' + (item.applied ? icon('check') : '') + '</span>';
+          else if (!item.axis) body += icon('right', 'setting-forward');
+          return command(item, body, (item.description ? 'has-description' : '') + (item.toggle ? ' is-toggle' : '') + (item.applied ? ' is-applied' : ''));
         }).join('') + '</div>'
         + (section.reason ? '<p class="setting-reason">' + esc(section.reason) + '</p>' : '') + '</section>';
     }).join(''));
@@ -1655,8 +1733,12 @@
         + command({ action: 'settings.retry', label: 'Try again' }, '<span>Try again</span>', 'setting-retry');
     }
     setHTML(appearanceStatus, status);
-    hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + (t.group === 'rotation' ? 'Background' : 'Settings') : selected.action === 'settings.retry' ? 'Retry this change' : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : 'Open on the TV';
+    hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + (t.group === 'rotation' ? 'Background' : 'Settings') : selected.action === 'settings.retry' ? 'Retry this change' : selected.action === 'samsung.useAsHome' ? (useAsHome() ? 'Turn off \u2014 Home opens Samsung Home' : 'Turn on \u2014 Home opens Clean Home') : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
+    try {
+      var focusEl = appearanceRows.querySelector('.setting-choice.is-focus');
+      if (focusEl && focusEl.scrollIntoView) focusEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    } catch (eScroll) {}
   }
   function renderWallpaper(t) {
     V.wallpaper.norm(t);
@@ -1869,12 +1951,12 @@
   function bundleKey(look) { return look.wall + '|' + look.material; }
   function loadBundle(look, token, done) {
     var src = (S.c && S.c.dailyBing && BING.url && look.wall === S.c.wall) ? BING.url : WP + look.wall + '.jpg';
-    var imgs = { photo: makeImg('photo', src), bg: makeImg('sheet-bg is-live-glass', src) }, keys, left, allOk = true;
-    imgs.mat = makeImg('mat-img is-live-glass', src);
-    imgs.field = makeImg('ph-field-img is-live-glass', src);
-    imgs.fieldAlt = makeImg('ph-field-img is-live-glass', src);
-    imgs.utility = makeImg('ph-field-img is-live-glass', src);
-    imgs.utilityAlt = makeImg('ph-field-img is-live-glass', src);
+    var imgs = { photo: makeImg('photo', src), bg: makeImg('sheet-bg is-preblur', src) }, keys, left, allOk = true;
+    imgs.mat = makeImg('mat-img is-preblur', src);
+    imgs.field = makeImg('ph-field-img is-preblur', src);
+    imgs.fieldAlt = makeImg('ph-field-img is-preblur', src);
+    imgs.utility = makeImg('ph-field-img is-preblur', src);
+    imgs.utilityAlt = makeImg('ph-field-img is-preblur', src);
     keys = Object.keys(imgs); left = keys.length;
     keys.forEach(function (k) { whenReady(imgs[k], function (ok) {
       allOk = allOk && ok;
@@ -2072,6 +2154,8 @@
     if (!k || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     ev.preventDefault();
     if (k === 'ok' || k === 'back') { if (ev.repeat || heldKeys[code]) return; heldKeys[code] = true; }
+    if ((k === 'left' || k === 'right' || k === 'up' || k === 'down') && ev.repeat && heldKeys[code]) return;
+    if (k === 'left' || k === 'right' || k === 'up' || k === 'down') heldKeys[code] = true;
     press(k);
   });
   document.addEventListener('keyup', function (ev) { delete heldKeys[ev.keyCode]; });
@@ -2088,6 +2172,43 @@
     } catch (e) {}
     chDebug('home-reset', { reason: reason, from: from, now: top().id });
   }
+  /* Home preference: soft flag only. Never redirects an app-list launch away from Clean Home.
+     When Off and this launch looks like a Home-key / main-operation takeover, hand off to Samsung Home.
+     Native Home vconf is still managed by scripts/native-home on the PC (apply/restore). */
+  var HOME_PREF_KEY = 'cleanhome.home.v1';
+  function readHomePref() {
+    try { return JSON.parse(localStorage.getItem(HOME_PREF_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function useAsHome() { return readHomePref().useAsHome !== false; }
+  function setUseAsHome(on) {
+    var p = readHomePref(); p.useAsHome = !!on;
+    try { localStorage.setItem(HOME_PREF_KEY, JSON.stringify(p)); } catch (e) {}
+    chDebug('home-pref', { useAsHome: !!on });
+  }
+  function isHomeTriggeredLaunch(info) {
+    var op = (info && info.op) || '';
+    if (!op) return false;
+    if (/\/operation\/default$/i.test(op)) return false; /* app list / explicit open */
+    if (/\/operation\/main$/i.test(op)) return true;
+    if (/eden_resume/i.test(op)) return true;
+    return false;
+  }
+  function maybeHandOffHome(hook) {
+    if (useAsHome()) return false;
+    var info = launchInfo();
+    if (!isHomeTriggeredLaunch(info)) {
+      chDebug('home-handoff-skip', { hook: hook, reason: 'not-home-launch', info: info, useAsHome: useAsHome() });
+      return false;
+    }
+    chDebug('home-handoff', { hook: hook, info: info });
+    try {
+      FrameDevice.home(function () {
+        try { tizen.application.getCurrentApplication().exit(); } catch (eExit) {}
+      });
+    } catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); }
+    return true;
+  }
+
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
   function launchInfo() {
     var o = {};
@@ -2102,7 +2223,7 @@
     } catch (e) { o.err = String(e).slice(0, 80); }
     return o;
   }
-  window.addEventListener('appcontrol', function () { chDebug('launch', { hook: 'appcontrol', info: launchInfo() }); resetToMain('appcontrol'); });
+  window.addEventListener('appcontrol', function () { chDebug('launch', { hook: 'appcontrol', info: launchInfo() }); if (maybeHandOffHome('appcontrol')) return; resetToMain('appcontrol'); });
   document.addEventListener('webkitvisibilitychange', function () { if (!document.webkitHidden) { chDebug('launch', { hook: 'webkitvisible', info: launchInfo() }); resetToMain('webkitvisible'); } });
   window.addEventListener('pageshow', function () { resetToMain('pageshow'); });
   var blurAt = 0;
@@ -2117,7 +2238,7 @@
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
     if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); }
-    else { release(); chDebug('launch', { hook: 'visible', info: launchInfo() }); resetToMain('visible'); updateClock(); }
+    else { release(); chDebug('launch', { hook: 'visible', info: launchInfo() }); if (!maybeHandOffHome('visible')) resetToMain('visible'); updateClock(); }
   });
   window.addEventListener('resize', fit);
  
@@ -2155,18 +2276,6 @@
   cueL.innerHTML = icon('left'); cueR.innerHTML = icon('right');
   initialise();
   try { var ci = tizen.application.getCurrentApplication().appInfo; chDebug('self', { iconPath: ci.iconPath, version: ci.version }); } catch (eIcon) {}
-  /* Clear v1.2.2 lockout preference \u2014 Clean Home must always open when launched. */
-  try {
-    var raw = localStorage.getItem('cleanhome.home.v1');
-    if (raw) {
-      var pref = JSON.parse(raw);
-      if (pref && pref.useAsHome === false) {
-        delete pref.useAsHome;
-        localStorage.setItem('cleanhome.home.v1', JSON.stringify(pref));
-      }
-    }
-    localStorage.removeItem('cleanhome.useAsHome');
-  } catch (eLock) {}
   /* Debug-only probes (inactive when CH_DEBUG_URL is empty). */
   if (CH_DEBUG_URL) {
     try {
@@ -2193,7 +2302,7 @@
       r1 = m.getBoundingClientRect(); r2 = l.getBoundingClientRect();
       if (r1.width) gaps.push((t.className.split(' ')[0]) + ':' + (l.textContent || '').slice(0, 14) + ':gap=' + Math.round(r2.top - r1.bottom) + ':icon=' + Math.round(r1.width));
     });
-    return { cmd: c, view: top().id, depth: S.stack.length, home: S.c.home, catalog: ALPHA.length, dailyBing: S.c.dailyBing, bing: BING.url, walls: walls,
+    return { cmd: c, view: top().id, depth: S.stack.length, home: S.c.home, useAsHome: useAsHome(), catalog: ALPHA.length, dailyBing: S.c.dailyBing, bing: BING.url, walls: walls,
       caption: (document.querySelector('.caption') || {}).textContent || '', gaps: gaps,
       header: Array.prototype.map.call(document.querySelectorAll('.utils .u'), function (b) { return b.getAttribute('data-action'); }),
       marks: Array.prototype.map.call(document.querySelectorAll('.dock .tile .mark'), function (m) { var k = m.querySelector('.mk'); return (m.getAttribute('data-mark') || 'img') + ':' + (k ? (getComputedStyle(k).webkitMaskImage || '').split('/').pop().slice(0, 22) : 'bundled'); }),
@@ -2211,6 +2320,8 @@
           else if (c === 'editor') goScene('editor');
           else if (c === 'apps') goScene('apps');
           else if (c === 'shome') utilAction('samsunghome');
+          else if (c === 'homeon') { setUseAsHome(true); }
+          else if (c === 'homeoff') { setUseAsHome(false); }
           else if (c === 'right' || c === 'left' || c === 'up' || c === 'down') press(c);
           else if (c === 'internet' || c === 'youtube' || c === 'hotstar') launch(c === 'internet' ? 'browser' : c);
           else if (c === 'bundled' || c === 'bing') {
@@ -2232,4 +2343,6 @@
   refreshCatalog();
   setLook({}, { transient: true, startup: true });
   norm(); render(); fit(); focusStage(); updateClock(); syncRotation();
+  chDebug('launch', { hook: 'start-ready', info: launchInfo(), useAsHome: useAsHome() });
+  maybeHandOffHome('start');
 })();

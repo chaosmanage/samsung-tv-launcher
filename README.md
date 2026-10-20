@@ -1,5 +1,7 @@
 # Clean Home
 
+**Version 1.2.4** — Home toggle, Back-on-main, Settings layout, faster glass blur. See `docs/CHANGELOG-1.2.4.md`.
+
 A quiet, CleanFrame-style home screen for Kunal's Samsung Crystal UHD TV (`UA43DU7660KLXL`, Tizen, 2024).
 Based on **[CleanFrame](https://github.com/nthnclrk/CleanFrame) by Nathan Clark** (MIT License). It keeps
 CleanFrame's screens, glass dock, typography and remote navigation, adapted for this TV's apps.
@@ -7,7 +9,7 @@ CleanFrame's screens, glass dock, typography and remote navigation, adapted for 
 Current version: **1.2.3** (see [docs/CHANGELOG-1.2.3.md](docs/CHANGELOG-1.2.3.md) and the live-TV
 [test table](docs/TEST-TABLE-1.2.3.md)).
 
-![Dock (1.2.3 preview)](docs/previews/dock-1.2.3-final.png)
+![Home (preview)](docs/images/home-v123.png)
 
 ## What you get
 
@@ -26,10 +28,7 @@ Current version: **1.2.3** (see [docs/CHANGELOG-1.2.3.md](docs/CHANGELOG-1.2.3.m
   feeds the home photo, the dock glass, the Settings / All apps backdrop and every glass field. Glass is a
   live CSS blur of that same image. The Bing image is a live URL and is never written to the TV.
 - **HDMI** opens `org.tizen.tv-viewer` (verified STATUS_FOCUS). Art Mode isn't offered (this Crystal UHD has none).
-- **Home key behaviour:** pressing Home while in All apps or other sub-screens returns to the main home when the TV
-  delivers a launch/resume event. **Known limitation (UA43DU7660 / 2024 firmware):** if Clean Home is already in the
-  foreground, pressing Home inside **Settings** may do nothing—the TV does not send an event the page can intercept.
-  Use Back, or the header **Samsung Home** control. See [docs/TEST-TABLE-1.2.3.md](docs/TEST-TABLE-1.2.3.md).
+- **Home key behaviour:** pressing Home while in Settings, All apps or any sub-screen returns to the main home.
 - Remote: arrows, OK and Back only.
 
 ## Install

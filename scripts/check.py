@@ -57,7 +57,10 @@ assert 'Wakad, Pune' in main
 assert 'api.open-meteo.com' in main
 for dock_icon in ['hdmi','youtube','netflix','zee5','primevideo','hotstar','sonyliv','browser','samsunghome']:
     assert (app / ('assets/icons/dock/' + dock_icon + '.png')).is_file(), 'Missing dock PNG icon: ' + dock_icon
-assert 'enforceHomePreference' not in main
+assert 'function maybeHandOffHome' in main and 'function useAsHome' in main
+assert 'isHomeTriggeredLaunch' in main and 'maybeHandOffHome' in main
+assert 'samsung.useAsHome' in main
+# Soft handoff must never redirect an app-list (default) launch.
 assert "org.tizen.tv-viewer" in (app / 'device.js').read_text()
 print('Widget identity, version and bundled resources are valid.')
 
