@@ -50,3 +50,14 @@ Times in Asia/Calcutta (IST). TV: UA43DU7660KLXL.
 | New build installed and running | PASS | 20:44 pid 2104 STATUS_FOCUS; prefs found, dock 9 incl. Spotify, useAsHome false |
 | Real Home press with toggle Off (new build) | PENDING | Kunal |
 | TV Plus key reaches Clean Home | FAIL (platform) | 20:37:16 only `blur`, Samsung popup "You have disabled Samsung TV Plus"; no keydown |
+
+## Hotfix 3 (20 Oct 2026, 20:56 IST)
+| Test | Result | Evidence |
+|---|---|---|
+| Kunal real Home presses, toggle Off (hotfix 2 build) | PASS (with flash) | 20:46:45 / 20:47:08 / 20:47:25 handoff on `visible`; Samsung Home took focus 605 / 814 / 875 ms after Clean Home became visible; UI painted meanwhile |
+| Replay (head script + main.js, 14 cases incl. blackout state) | PASS | `node scripts/_replay-home.js` |
+| Clock/header ink with "peaks" palette + Bing photo | PASS | preview: before #274359 / #3f5b73 / focus #0c2131, after rgb(255,255,255) for clock, PM, header text, icons and focus label |
+| Header focus lens vs 1.2.3 | PASS | pixel diff on the lens ≤ 14/255 (text cream → white) |
+| Settings overlap test | PASS | `_settings-overlap.mjs` all pages |
+| Installed on TV | PASS | 20:55:58 pid 2084 STATUS_FOCUS, prefs found (dock 9 incl. Spotify, toggle Off), utility lens = Bing photo, dock/sheet glass not loaded (solid) |
+| Home key → Samsung Home time after fix | PENDING | logged automatically as `home-handoff-front` on Kunal's next press |

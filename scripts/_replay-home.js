@@ -5,9 +5,10 @@ const grab = (name) => { const i = src.indexOf('  function ' + name + '('); let 
 let current = null, pref = { useAsHome: false }, handoffs = [];
 const tizen = { application: { getCurrentApplication: () => ({ getRequestedAppControl: () => current }) } };
 const FrameDevice = { home: (cb) => { handoffs.push(step); cb && cb(null); } };
-const chDebug = () => {}; const useAsHome = () => pref.useAsHome !== false;
+const chDebug = () => {}; global.document = { documentElement: { className: '' }, hidden: false, hasFocus: () => true };
+const document = global.document; const window = global; const useAsHome = () => pref.useAsHome !== false;
 let step = '';
-eval('var lastLaunchKey = null;' + ['isHomeTriggeredLaunch', 'launchKey', 'maybeHandOffHome', 'launchInfo', 'onEntry'].map(grab).join('\n') + '; global.onEntry = onEntry;');
+eval('var lastLaunchKey = null; var HANDOFF = { at: 0 };' + ['isHomeTriggeredLaunch', 'launchKey', 'maybeHandOffHome', 'launchInfo', 'onEntry', 'handoffHide', 'handoffShow'].map(grab).join('\n') + '; global.onEntry = onEntry; global.HANDOFF = HANDOFF; global.setLast = function (k) { lastLaunchKey = k; };');
 const req = (caller, data) => ({ callerAppId: caller, appControl: { operation: 'http://tizen.org/appcontrol/operation/default', uri: '', data: Object.entries(data).map(([key, value]) => ({ key, value })) } });
 const SDB = req('', { USE_DISKCACHE: 'Yes', __K_SPLASH_SCREEN: 'LA_UI_DEFAULT', __K_RELOCATE_BELOW: 'KsHome0001.CleanHome', Title: 'Clean Home' });
 const APPROW = req('org.tizen.litewebappservice', { callerid: 'com.samsung.tv.home.media', CallerId: 'com.samsung.tv.home.media', SkipReload: 'Yes', LaunchFromHome: '1', __K_RELOCATE_BELOW: 'com.samsung.tv.csfs', Entry: 'launcher' });
@@ -25,11 +26,32 @@ const steps = [
   ['On: Home press', HOMEKEY(1700000), ['focus'], false, true],
 ];
 let ok = true;
+// --- head-script replay: cold Home-key launch, toggle Off ---
+{
+  const html = require('fs').readFileSync(__dirname + '/../app/index.html', 'utf8');
+  const code = html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
+  const launches = []; const store = { 'cleanhome.homepref': JSON.stringify({ useAsHome: false }) };
+  const run = (reqObj, prefOff) => { const doc = { documentElement: { className: '' } }; const win = { localStorage: { getItem: k => prefOff ? store[k] || null : null } };
+    launches.length = 0; new Function('window', 'document', 'tizen', 'performance', code)(win, doc, { application: { getCurrentApplication: () => ({ getRequestedAppControl: () => reqObj }), launch: (id, ok) => { launches.push(id); ok && ok(); } } }, { timing: { navigationStart: Date.now() - 40 } });
+    return { win, doc, launches: launches.slice() }; };
+  const cases = [['head: cold Home key, Off', HOMEKEY(1800000), true, 1], ['head: cold app row, Off', APPROW, true, 0], ['head: cold sdb, Off', SDB, true, 0], ['head: recovery, Off', RECOVERY, true, 0], ['head: Home key, On', HOMEKEY(1800001), false, 0]];
+  for (const [name, r, off, expect] of cases) {
+    const o = run(r, off); let pass = o.launches.length === expect && (expect ? /ch-handoff/.test(o.doc.documentElement.className) : !/ch-handoff/.test(o.doc.documentElement.className));
+    if (expect) { // main.js must not launch a second time for the same request
+      global.setLast(o.win.__CH_EARLY.key); pref.useAsHome = false; current = r; const b = handoffs.length; onEntry('start'); onEntry('focus'); pass = pass && handoffs.length === b;
+    }
+    ok = ok && pass; console.log((pass ? 'PASS' : 'FAIL') + '  launches=' + o.launches.join(',') + '  ' + name + (expect ? ' (main.js de-duped)' : ''));
+  }
+  global.setLast(null);
+}
 for (const [name, r, hooks, expect, on] of steps) {
   pref.useAsHome = !!on; current = r; step = name; const before = handoffs.length;
   hooks.forEach(h => onEntry(h));
-  const n = handoffs.length - before, pass = expect ? n === 1 : n === 0;
+  let n = handoffs.length - before, pass = expect ? n === 1 : n === 0;
+  const black = /ch-handoff/.test(document.documentElement.className);
+  const wantBlack = expect || (/stale/.test(name));   // stale echo within 1.5 s stays black; app row / others show
+  pass = pass && (black === wantBlack);
   ok = ok && pass;
-  console.log((pass ? 'PASS' : 'FAIL') + '  handoffs=' + n + '  ' + name + '  [' + hooks.join(',') + ']');
+  console.log((pass ? 'PASS' : 'FAIL') + '  black=' + black + '  handoffs=' + n + '  ' + name + '  [' + hooks.join(',') + ']');
 }
 process.exit(ok ? 0 : 1);

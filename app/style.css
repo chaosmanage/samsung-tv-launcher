@@ -658,8 +658,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .at-appearance .scene,.at-wallpaper .scene{will-change:auto}
 
 /* v1.2.4 solid glass (default): no blurred images, plain translucent fills. Fast on ARMv7. */
-.glass-solid .mat-img,.glass-solid .mat-scrim,.glass-solid .sheet-bg,.glass-solid .ph-field-img{display:none!important}
+.glass-solid .mat-img,.glass-solid .mat-scrim,.glass-solid .sheet-bg,.glass-solid .ph-scene .ph-field-img{display:none!important}
 .glass-solid.bg-photo .mat-veil{background:rgba(10,14,18,.42)}
-.glass-solid.bg-photo .ph-veil{background:rgba(10,12,14,.46)}
+.glass-solid.bg-photo .ph-scene .ph-veil{background:rgba(10,12,14,.46)}
 .glass-solid.bg-photo .sheet{background:rgba(10,13,16,.86)}
 .glass-solid .mat::after{box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+
+/* v1.2.4: header focus lens keeps its exact 1.2.3 glass (small static element; dock/settings stay blur-free). */
+.ut-lens .ph-field-img.is-live-glass{filter:blur(32px) saturate(1.06) brightness(.9);-webkit-filter:blur(32px) saturate(1.06) brightness(.9)}
+/* v1.2.4: clock and header buttons are always white on photos, like the weather line and dock marks.
+   (A bundled wallpaper's adaptive palette, e.g. "peaks" #274359/#3f5b73, must not darken them under the Bing photo.) */
+.bg-photo .caption .clock,.bg-photo .caption .clock-digit,.bg-photo .caption .clock-ap,
+.bg-photo .quiet-utils .u,.bg-photo .quiet-utils .u.is-focus,.bg-photo .quiet-utils .u.is-idle,.bg-photo .quiet-utils .u .ico,
+.bg-photo .utils .u:not(.is-focus),.bg-photo .utils .u:not(.is-focus) .ico,.bg-photo .util-focus-label{color:#fff!important;text-shadow:0 2px 6px rgba(0,0,0,.45)!important}

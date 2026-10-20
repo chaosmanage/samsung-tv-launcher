@@ -59,3 +59,14 @@
 - `scripts/_replay-home.js` replays the logged real requests through the shipped code (9/9 PASS).
 - TV Plus key: the system handles it before apps see it. Pressing it showed Samsung's "You have disabled Samsung TV Plus"
   popup, and Clean Home got only a `blur` (no key event). Samsung support says app buttons can't be reprogrammed.
+
+## 1.2.4 hotfix 3 (20 Oct 2026, 20:56 IST): Home flash, white clock/header, header glass
+- **Home-key flash minimised (toggle Off).** An inline `<script>` at the top of `<head>` reads `cleanhome.homepref` and the launch
+  request synchronously. On `entry_point=smarthub_key` / `operation/main` (never `LaunchFromHome=1`, `Entry=launcher` or recovery) it blacks out the page
+  and launches com.samsung.tv.csfs (fallback coba.newhome) before CSS, fonts, images or main.js load. main.js de-dupes the same request via `__CH_EARLY`.
+  When Clean Home is already running, the handoff blacks out the UI before launching. With the toggle Off, the page also turns black when it goes to the background,
+  so a resume never shows a stale frame. Any legitimate show (app list, app row, back from Samsung Home) restores it at the first entry hook. A 3 s safety timer restores it if Samsung Home never takes focus.
+  New beacon events: `home-handoff-front` (ms from handoff to Samsung Home taking focus), `home-handoff-show`.
+- **Clock and header buttons are white** (`#fff`, shadow `0 2px 6px rgba(0,0,0,.45)` like the weather line) on photo backgrounds, including icons, PM and the focus label.
+  Cause: the bundled wallpaper's adaptive palette ("peaks": #274359 / #3f5b73) was applied while the Bing photo was shown.
+- **Header focus lens keeps its 1.2.3 glass** (sharp photo + the 1.2.3 CSS blur on that small static element only). Dock, Settings and sheets stay blur-free (solid).

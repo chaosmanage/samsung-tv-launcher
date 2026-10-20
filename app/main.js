@@ -1356,7 +1356,15 @@
       photo.className = (photo.className || '').replace(/\bis-live-glass\b/g, '').replace(/\bis-preblur\b/g, '').replace(/\s+/g, ' ').trim();
     }
     if (glassMode() === 'solid') {
-      WALL_CONSUMERS.forEach(function (k) { if (k !== 'photo' && IMG[k] && IMG[k].getAttribute('data-live') !== 'none') { IMG[k].setAttribute('data-live', 'none'); IMG[k].removeAttribute('src'); } });
+      WALL_CONSUMERS.forEach(function (k) {
+        var im = IMG[k]; if (k === 'photo' || !im) return;
+        if (k === 'utility' || k === 'utilityAlt') {   /* header lens: exact 1.2.3 look */
+          im.className = (im.className || '').replace(/\bis-preblur\b/g, '').replace(/\bis-live-glass\b/g, '').replace(/\s+/g, ' ').trim() + ' is-live-glass';
+          if (im.getAttribute('data-live') !== src) { im.setAttribute('data-live', src); im.src = src; }
+          return;
+        }
+        if (im.getAttribute('data-live') !== 'none') { im.setAttribute('data-live', 'none'); im.removeAttribute('src'); }
+      });
       if (changed) chDebug('wallpaper', { src: src, glass: 'solid' });
       return;
     }
@@ -1979,8 +1987,11 @@
     imgs.fieldAlt = makeImg('ph-field-img is-preblur', src);
     imgs.utility = makeImg('ph-field-img is-preblur', src);
     imgs.utilityAlt = makeImg('ph-field-img is-preblur', src);
-    if (glassMode() === 'solid') ['bg', 'mat', 'field', 'fieldAlt', 'utility', 'utilityAlt'].forEach(function (k) { imgs[k].removeAttribute('src'); imgs[k].setAttribute('data-live', 'none'); imgs[k].complete || 0; });
-    keys = glassMode() === 'solid' ? ['photo'] : Object.keys(imgs); left = keys.length;
+    if (glassMode() === 'solid') {
+      ['bg', 'mat', 'field', 'fieldAlt'].forEach(function (k) { imgs[k].removeAttribute('src'); imgs[k].setAttribute('data-live', 'none'); });
+      ['utility', 'utilityAlt'].forEach(function (k) { imgs[k].className = 'ph-field-img is-live-glass'; imgs[k].setAttribute('data-live', src); });
+    }
+    keys = glassMode() === 'solid' ? ['photo', 'utility', 'utilityAlt'] : Object.keys(imgs); left = keys.length;
     keys.forEach(function (k) { whenReady(imgs[k], function (ok) {
       allOk = allOk && ok;
       if (--left || token !== wallToken) return;
@@ -2222,7 +2233,7 @@
   }
   /* One Home press = one launch request. The TV stamps each request with __K_APP_LAUNCH_START_TIME; a later
      focus/visible event that still sees the same request (e.g. coming back from Samsung Home) must not bounce. */
-  var lastLaunchKey = null;
+  var lastLaunchKey = (window.__CH_EARLY && window.__CH_EARLY.key) || null;
   function launchKey(info) {
     var d = (info && info.data) || [], i;
     for (i = 0; i < d.length; i++) if (d[i].indexOf('__K_APP_LAUNCH_START_TIME=') === 0) return d[i];
@@ -2240,12 +2251,31 @@
       chDebug('home-handoff-skip', { hook: hook, reason: 'not-home-launch', key: key });
       return false;
     }
-    /* Launch Samsung Home first, log afterwards: it should feel instant. Do not exit (recovery relaunch). */
-    try { FrameDevice.home(function (err) { chDebug('home-handoff-done', { hook: hook, err: err ? (err.message || String(err)) : null }); }); }
-    catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); }
+    /* Black out instantly (no wallpaper/UI flash), launch Samsung Home, log afterwards. Do not exit (recovery relaunch). */
+    handoffHide();
+    var t0 = Date.now();
+    HANDOFF.at = t0; HANDOFF.hook = hook; HANDOFF.key = key;
+    try { FrameDevice.home(function (err) { chDebug('home-handoff-done', { hook: hook, launchMs: Date.now() - t0, err: err ? (err.message || String(err)) : null }); if (err) handoffShow('launch-failed'); }); }
+    catch (e) { chDebug('home-handoff-err', String(e).slice(0, 120)); handoffShow('launch-threw'); }
     chDebug('home-handoff', { hook: hook, key: key });
     return true;
   }
+  /* Handoff blackout. Set by the inline <head> script on a cold Home-key launch, or here on a running app. */
+  var HANDOFF = { at: (window.__CH_EARLY && window.__CH_EARLY.at) || 0, hook: window.__CH_EARLY ? 'head' : '', key: (window.__CH_EARLY && window.__CH_EARLY.key) || '' };
+  function handoffHide() { document.documentElement.className += ' ch-handoff'; }
+  function handoffShow(why) {
+    if (!/\bch-handoff\b/.test(document.documentElement.className)) return;
+    document.documentElement.className = document.documentElement.className.replace(/\s*\bch-handoff\b/g, '');
+    chDebug('home-handoff-show', { why: why, sinceHandoff: HANDOFF.at ? Date.now() - HANDOFF.at : null });
+  }
+  /* Blur right after a handoff = Samsung Home is now in front. */
+  window.addEventListener('blur', function () {
+    if (HANDOFF.at && !HANDOFF.blurLogged) { HANDOFF.blurLogged = true; chDebug('home-handoff-front', { hook: HANDOFF.hook, ms: Date.now() - HANDOFF.at, early: window.__CH_EARLY || null }); }
+  });
+  /* Safety: never stay black if Samsung Home didn't take focus. */
+  setInterval(function () {
+    if (HANDOFF.at && Date.now() - HANDOFF.at > 3000 && /\bch-handoff\b/.test(document.documentElement.className) && !document.hidden && document.hasFocus && document.hasFocus()) handoffShow('safety-still-focused');
+  }, 1000);
 
   /* What launched/resumed us: logged (debug beacon) to tell a Home-key launch from an app-list launch. */
   function launchInfo() {
@@ -2263,7 +2293,10 @@
   }
   /* Single entry point for all "we are (back) on screen" signals. */
   function onEntry(hook, extra) {
-    if (maybeHandOffHome(hook)) return true;
+    if (maybeHandOffHome(hook)) { HANDOFF.blurLogged = false; return true; }
+    /* Legitimately shown again (app list, back from Samsung Home, ...): undo the blackout,
+       but not in the echo of our own handoff (same request, <1.5 s). */
+    if (!HANDOFF.at || launchKey(launchInfo()) !== HANDOFF.key || Date.now() - HANDOFF.at > 1500) handoffShow(hook);
     chDebug('launch', { hook: hook, extra: extra || null, info: launchInfo() });
     return false;
   }
@@ -2282,7 +2315,7 @@
   chDebug('launch', { hook: 'start', info: launchInfo() });
   document.addEventListener('visibilitychange', function () {
     heldKeys = {};
-    if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); }
+    if (document.hidden) { pauseRotation(); clearTimeout(clockTimer); if (!useAsHome()) { HANDOFF.at = 0; handoffHide(); } /* resume frame starts black; legit shows undo it at the first hook */ }
     else { release(); if (!onEntry('visible')) resetToMain('visible'); updateClock(); }
   });
   window.addEventListener('resize', fit);

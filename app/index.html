@@ -1,6 +1,33 @@
 <!doctype html>
 <html lang="en-IN">
 <head>
+<script>
+/* Clean Home 1.2.4: Home-key handoff before anything else loads (toggle Off). Keep in sync with
+   isHomeTriggeredLaunch/launchKey in main.js. Black page, launch Samsung Home, main.js de-dupes via __CH_EARLY. */
+(function () {
+  try {
+    var ls = window.localStorage, p = JSON.parse(ls.getItem('cleanhome.homepref') || ls.getItem('cleanhome.homepref.bak') || '{}') || {};
+    if (p.useAsHome !== false) return;
+    var app = tizen.application, r = app.getCurrentApplication().getRequestedAppControl();
+    var ac = r && r.appControl, d = (ac && ac.data) || [], i, k, v, home = false, skip = false, key = '';
+    if (ac && /\/operation\/main$/i.test(ac.operation || '')) home = true;
+    for (i = 0; i < d.length; i++) {
+      k = d[i].key; v = String(d[i].value).slice(0, 60);
+      if (k === 'entry_point' && v === 'smarthub_key') home = true;
+      if ((k === 'LaunchFromHome' && v === '1') || (k === 'Entry' && v === 'launcher') || (k === '__K_EX_RECOVERY_LAUNCH' && v === 'true')) skip = true;
+      if (k === '__K_APP_LAUNCH_START_TIME') key = k + '=' + v;
+    }
+    if (!home || skip) return;
+    if (!key) key = (r.callerAppId || '') + '|' + (ac.operation || '') + '|' + d.slice(0, 16).map(function (x) { return x.key + '=' + String(x.value).slice(0, 60); }).join('|');
+    document.documentElement.className += ' ch-handoff';
+    var t0 = Date.now(), nav = (window.performance && performance.timing && performance.timing.navigationStart) || 0;
+    window.__CH_EARLY = { key: key, at: t0, sinceNav: nav ? t0 - nav : null };
+    app.launch('com.samsung.tv.csfs', function () { window.__CH_EARLY.launchMs = Date.now() - t0; },
+      function () { try { app.launch('com.samsung.tv.coba.newhome'); } catch (e) {} });
+  } catch (e) {}
+})();
+</script>
+<style>html.ch-handoff,html.ch-handoff body{background:#000!important}html.ch-handoff body{visibility:hidden!important}</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clean Home</title>
