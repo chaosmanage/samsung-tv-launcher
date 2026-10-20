@@ -2,7 +2,24 @@
 
 All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade steps: [docs/UPDATE.md](docs/UPDATE.md).
 
-## 1.2.7 (2026-10-20)
+## 1.2.8 (2026-10-20)
+
+### Removed
+- **TV Plus → YouTube redirect removed completely.** 1.2.7's in-app redirect force-launched YouTube over and
+  over (it saw TV Plus still running in the background) and missed presses from Netflix (Clean Home is suspended
+  there). It shipped without proper testing. The 1.2.6 shell watcher, the PC re-arm task and `tvplus-watcher/`
+  are removed too. TV Plus vconfs and appsvc state were checked against the original baseline.
+  See [docs/TVPLUS-REMAP-POSTMORTEM.md](docs/TVPLUS-REMAP-POSTMORTEM.md).
+
+### Fixed
+- **Cold-boot black screen (further fix).** With *Use Clean Home as Home screen* Off, hiding the page adds the
+  black handoff class with no handoff timestamp, so the 1.2.6 safety timer never cleared it. A plug-pull boot hides
+  and re-shows Clean Home while tv-viewer and the web runtime settle, so it stayed black until a remote power cycle.
+  Every blackout now has a timestamp. The page is shown again 1.5 s after it becomes visible if nothing handed off.
+  In the first 30 s after load, it is shown even if the page still reports hidden. A real Home press with the toggle
+  Off still hands off to Samsung Home with no flash.
+
+## 1.2.7 (2026-10-20) — withdrawn, see 1.2.8
 
 ### Added
 - **TV Plus button opens YouTube** (Settings → Samsung, default On). While Clean Home is in the

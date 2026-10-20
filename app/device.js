@@ -99,32 +99,8 @@
       }, function (err) { done(failure(err)); });
     } catch (err) { done(failure(err)); }
   }
-
-  function getRunningMap(done) {
-    if (!api()) { done({}); return; }
-    try {
-      api().getAppsContext(function (list) {
-        var map = {}, i, c;
-        for (i = 0; i < (list || []).length; i++) {
-          c = list[i];
-          if (c && c.appId) map[c.appId] = c.id || c.appId;
-        }
-        done(map);
-      }, function () { done({}); });
-    } catch (e) { done({}); }
-  }
-  function killApp(appId, done) {
-    if (!api() || !appId) { if (done) done(null); return; }
-    getRunningMap(function (map) {
-      var ctx = map[appId];
-      if (!ctx) { if (done) done(null); return; }
-      try {
-        api().kill(ctx, function () { if (done) done(null); }, function (err) { if (done) done(err || { message: 'kill-denied' }); });
-      } catch (e) { if (done) done(failure(e)); }
-    });
-  }
   window.FrameDevice = {
-    launch: launch, launchApp: launchApp, killApp: killApp, getRunningMap: getRunningMap, art: art, home: home, settings: settings, apps: apps, hdmi: hdmi,
+    launch: launch, launchApp: launchApp, art: art, home: home, settings: settings, apps: apps, hdmi: hdmi,
     exitHdmi: function (done) { if (done) done(null); },
     isHdmi: function () { return false; }
   };
