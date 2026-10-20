@@ -959,7 +959,10 @@
     if (t.group === 'background') return [
       { id: 'bg', title: 'Background type', items: options('bg', ['photo', 'light', 'dark']) },
       { id: 'wall', title: 'Wallpaper', items: [{ action: 'background.wallpaper', label: S.c.dailyBing && BING.url ? 'Bing daily photo \u2014 pick one to replace it' : wall(S.c.wall).name, thumbnail: true, disabled: flat }] },
-      { id: 'daily', title: 'Daily photo', items: [{ action: 'background.daily', label: S.c.dailyBing ? 'Bing daily (on)' : 'Off \u2014 use chosen wallpaper', disabled: flat, description: flat ? 'Choose Photo first' : 'Live URL only; nothing saved to the TV' }] },
+      { id: 'daily', title: 'Daily photo', items: [{ action: 'background.daily', label: S.c.dailyBing ? 'Bing daily (on)' : 'Off \u2014 use chosen wallpaper', disabled: flat, description: flat ? 'Choose Photo first' : 'Live URL only; nothing saved to the TV' }]
+        .concat(S.c.dailyBing && !flat ? [
+          { action: 'background.bingNext', label: BING.nextBusy ? 'Finding another photo\u2026' : 'Next Bing photo', description: BING.msg || 'Don\u2019t like this one? Show a different Bing photo' },
+          { action: 'background.bingToday', label: 'Back to today\u2019s photo', description: BING.pick ? 'You picked a photo; today\u2019s returns tomorrow anyway' : 'Showing today\u2019s photo' }] : []) },
       { id: 'rotation', title: 'Rotation', items: [{ action: 'background.rotation', label: mode().name, disabled: flat }] }
     ];
     if (t.group === 'layout') return [
@@ -1031,6 +1034,8 @@
         render();
       }
     }
+    else if (item.action === 'background.bingNext') nextBingPhoto();
+    else if (item.action === 'background.bingToday') todayBingPhoto();
     else if (item.action === 'background.rotation') openAppearance('rotation');
     else if (item.action === 'samsung.useAsHome') { setUseAsHome(!useAsHome()); render(); }
     else if (item.action === 'samsung.home') perform('Samsung Home', FrameDevice.home);
@@ -1381,6 +1386,38 @@
   function syncGlassFromSrc(src) { applyWallpaperEverywhere(src); }
   function applyBingPhoto(url) { if (url && S.c && S.c.dailyBing) applyWallpaperEverywhere(url); }
   function clearBingPhoto() { applyWallpaperEverywhere(); }
+  /* Bing photo state.
+     BING.today = today's en-IN image (refreshed when the date changes; checked hourly).
+     BING.url   = the photo actually shown: today's, or a manual pick from Settings -> Background ->
+                  "Next Bing photo". A manual pick is kept until the date changes, then today's wins.
+     Only the chosen URL is kept (localStorage 'cleanhome.bing'); images stay live URLs, nothing on disk. */
+  var BING_MKTS = ['en-IN', 'en-US', 'en-GB', 'ja-JP', 'de-DE', 'fr-FR', 'en-CA', 'en-AU', 'es-ES', 'it-IT', 'pt-BR'];
+  var BING_POOL = { list: [], keys: {}, mkt: 0, idx: 0 };
+  BING.today = ''; BING.pick = '';
+  function bingKey(url) { var m = /OHR\.([^_&]+)/.exec(url || ''); return m ? m[1] : String(url || ''); }
+  function bingFullUrl(img) {
+    var path = img && (img.url || (img.urlbase ? img.urlbase + '_1920x1080.jpg' : ''));
+    if (!path) return '';
+    return path.indexOf('http') === 0 ? path : ('https://www.bing.com' + path);
+  }
+  function bingSave() {
+    try { localStorage.setItem('cleanhome.bing', JSON.stringify({ url: BING.url, today: BING.today, pick: BING.pick, date: BING.date })); } catch (e) {}
+  }
+  function bingJson(mkt, idx, n, cb) {
+    if (typeof fetch !== 'function') { cb(null); return; }
+    var done = false, timer = setTimeout(function () { if (!done) { done = true; cb(null); } }, 10000);
+    fetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=' + idx + '&n=' + n + '&mkt=' + mkt)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP'); return r.json(); })
+      .then(function (j) { if (done) return; done = true; clearTimeout(timer); cb(j && j.images || null); })
+      ['catch'](function () { if (!done) { done = true; clearTimeout(timer); cb(null); } });
+  }
+  /* Show a URL only after it has actually loaded, so a failed photo never blanks the screen. */
+  function bingPreload(url, ok, bad) {
+    var im = new Image(), fin = false, timer = setTimeout(function () { if (!fin) { fin = true; bad(); } }, 15000);
+    im.onload = function () { if (fin) return; fin = true; clearTimeout(timer); if (im.naturalWidth > 0) ok(); else bad(); };
+    im.onerror = function () { if (fin) return; fin = true; clearTimeout(timer); bad(); };
+    im.src = url;
+  }
   function fetchBingDaily(force) {
     if (!S.c || !S.c.dailyBing || S.c.bg !== 'photo') return;
     if (BING.busy) return;
@@ -1388,24 +1425,95 @@
     if (!force && BING.lastFail && Date.now() - BING.lastFail < 15 * 60000) return;
     if (typeof fetch !== 'function') return;
     BING.busy = true;
-    var done = false, timer = setTimeout(function () { if (!done) { done = true; BING.busy = false; BING.lastFail = Date.now(); } }, 10000);
-    fetch('https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-IN')
-      .then(function (r) { if (!r.ok) throw new Error('HTTP'); return r.json(); })
-      .then(function (j) {
-        if (done) return; done = true; clearTimeout(timer); BING.busy = false;
-        var img = j && j.images && j.images[0], path = img && (img.url || img.urlbase);
-        if (!path) { BING.lastFail = Date.now(); return; }
-        var url = path.indexOf('http') === 0 ? path : ('https://www.bing.com' + path);
-        BING.url = url; BING.date = todayKey(); BING.lastFail = 0;
-        try { localStorage.setItem('cleanhome.bing', JSON.stringify({ url: url, date: BING.date })); } catch (e) {}
-        applyBingPhoto(url);
-      })['catch'](function () { if (!done) { done = true; clearTimeout(timer); BING.busy = false; BING.lastFail = Date.now(); } });
+    bingJson('en-IN', 0, 1, function (images) {
+      var url = bingFullUrl(images && images[0]);
+      if (!url) { BING.busy = false; BING.lastFail = Date.now(); return; }
+      var newDay = BING.date !== todayKey();
+      BING.today = url; BING.date = todayKey(); BING.lastFail = 0;
+      if (newDay) { BING.pick = ''; BING.msg = ''; }                      /* a new day replaces yesterday's manual pick */
+      if (BING.pick && BING.url) { BING.busy = false; bingSave(); return; }
+      if (url === BING.url) { BING.busy = false; bingSave(); applyBingPhoto(url); return; }
+      bingPreload(url, function () { BING.busy = false; BING.url = url; bingSave(); applyBingPhoto(url); render(); },
+        function () { BING.busy = false; BING.lastFail = Date.now(); });
+    });
+  }
+  /* Grow the pool one request at a time: en-IN idx 0 then idx 7 (~15 days), then other markets. */
+  function bingGrowPool(cb) {
+    if (BING_POOL.mkt >= BING_MKTS.length) { cb(false); return; }
+    var mkt = BING_MKTS[BING_POOL.mkt], idx = BING_POOL.idx;
+    bingJson(mkt, idx, 8, function (images) {
+      if (!images) { chDebug('bing-pool', { mkt: mkt, idx: idx, ok: false }); cb(false); return; }   /* offline: stop, retry this page next press */
+      if (BING_POOL.idx === 0) BING_POOL.idx = 7; else { BING_POOL.idx = 0; BING_POOL.mkt++; }
+      var added = 0;
+      (images || []).forEach(function (img) {
+        var url = bingFullUrl(img), k = bingKey(url);
+        if (url && !BING_POOL.keys[k]) { BING_POOL.keys[k] = 1; BING_POOL.list.push({ url: url, title: img.title || '' }); added++; }
+      });
+      chDebug('bing-pool', { mkt: mkt, idx: idx, ok: true, added: added, size: BING_POOL.list.length });
+      cb(true);
+    });
+  }
+  function bingStatus(msg) { BING.msg = msg; render(); }
+  /* Settings -> Background -> "Next Bing photo": next unseen Bing image; keeps current on failure. */
+  function nextBingPhoto() {
+    if (BING.nextBusy) return;
+    if (!S.c.dailyBing || S.c.bg !== 'photo') return;
+    BING.nextBusy = true; bingStatus('Finding another Bing photo\u2026');
+    var cur = bingKey(BING.url), todayK = bingKey(BING.today), tries = 0;
+    function pickFrom(start) {
+      for (var i = start; i < BING_POOL.list.length; i++) if (bingKey(BING_POOL.list[i].url) !== cur && bingKey(BING_POOL.list[i].url) !== todayK && !BING_POOL.list[i].bad) return i;
+      return -1;
+    }
+    function step() {
+      var at = -1;
+      for (var i = 0; i < BING_POOL.list.length; i++) if (bingKey(BING_POOL.list[i].url) === cur) at = i;
+      var i2 = pickFrom(at + 1);
+      if (i2 < 0) {
+        bingGrowPool(function (more) {
+          if (more) { step(); return; }
+          i2 = pickFrom(0);                              /* pool exhausted: wrap around */
+          if (i2 < 0) { BING.nextBusy = false; bingStatus('Couldn\u2019t reach Bing. Current photo kept.'); return; }
+          tryOne(i2);
+        });
+        return;
+      }
+      tryOne(i2);
+    }
+    function tryOne(i) {
+      var item = BING_POOL.list[i];
+      bingPreload(item.url, function () {
+        BING.nextBusy = false;
+        BING.url = item.url; BING.pick = item.url; BING.date = todayKey(); bingSave();
+        chDebug('bing-next', { url: item.url, pool: BING_POOL.list.length });
+        BING.msg = item.title ? 'Now showing: ' + item.title : 'New Bing photo applied';
+        applyBingPhoto(item.url); render();
+      }, function () {
+        item.bad = true;
+        if (++tries >= 4) { BING.nextBusy = false; bingStatus('Couldn\u2019t load a new photo. Current photo kept.'); return; }
+        step();
+      });
+    }
+    step();
+  }
+  /* "Back to today's photo": drop the manual pick. */
+  function todayBingPhoto() {
+    if (!BING.pick) { BING.msg = 'Already showing today\u2019s photo'; render(); return; }
+    var url = BING.today;
+    if (!url || BING.date !== todayKey()) { BING.pick = ''; bingSave(); BING.msg = 'Getting today\u2019s photo\u2026'; fetchBingDaily(true); render(); return; }
+    bingPreload(url, function () { BING.pick = ''; BING.url = url; bingSave(); BING.msg = 'Back to today\u2019s photo'; applyBingPhoto(url); render(); },
+      function () { bingStatus('Couldn\u2019t load today\u2019s photo. Current photo kept.'); });
   }
 
   function initBing() {
     try {
       var c = JSON.parse(localStorage.getItem('cleanhome.bing') || 'null');
-      if (c && c.url && c.date === todayKey()) { BING.url = c.url; BING.date = c.date; applyBingPhoto(c.url); }
+      if (c && c.url && c.date === todayKey()) {
+        BING.url = c.url; BING.date = c.date; BING.today = c.today || (c.pick ? '' : c.url); BING.pick = c.pick || '';
+        applyBingPhoto(c.url);
+      } else if (c && c.url) {
+        BING.url = c.url;   /* yesterday's photo stays on screen until today's has loaded */
+        applyBingPhoto(c.url);
+      }
     } catch (e) {}
     fetchBingDaily(true);
     setInterval(function () { fetchBingDaily(false); }, 60 * 60000);
@@ -1763,7 +1871,7 @@
         + command({ action: 'settings.retry', label: 'Try again' }, '<span>Try again</span>', 'setting-retry');
     }
     setHTML(appearanceStatus, status);
-    hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + (t.group === 'rotation' ? 'Background' : 'Settings') : selected.action === 'settings.retry' ? 'Retry this change' : selected.action === 'samsung.useAsHome' ? (useAsHome() ? 'Turn off \u2014 Home opens Samsung Home' : 'Turn on \u2014 Home opens Clean Home') : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : 'Open on the TV';
+    hint = selected.disabled ? '' : selected.action === 'settings.back' ? 'Return to ' + (t.group === 'rotation' ? 'Background' : 'Settings') : selected.action === 'settings.retry' ? 'Retry this change' : selected.action === 'samsung.useAsHome' ? (useAsHome() ? 'Turn off \u2014 Home opens Samsung Home' : 'Turn on \u2014 Home opens Clean Home') : selected.axis ? 'Apply selected setting' : selected.action === 'background.wallpaper' ? 'Choose a wallpaper' : selected.action === 'background.rotation' ? 'Choose a rotation interval' : selected.action === 'background.bingNext' ? 'Show a different Bing photo' : selected.action === 'background.bingToday' ? 'Return to today\u2019s Bing photo' : 'Open on the TV';
     setHTML(appearanceDesc, hint ? '<span class="remote-key">OK</span><span>' + esc(hint) + '</span>' : '');
     try {
       var focusEl = appearanceRows.querySelector('.setting-choice.is-focus');
@@ -2460,6 +2568,8 @@
           else if (c === 'homeoff') { setUseAsHome(false); }
           else if (c === 'right' || c === 'left' || c === 'up' || c === 'down') press(c);
           else if (c === 'internet' || c === 'youtube' || c === 'hotstar') launch(c === 'internet' ? 'browser' : c);
+          else if (c === 'bingnext') nextBingPhoto();
+          else if (c === 'bingtoday') todayBingPhoto();
           else if (c === 'bundled' || c === 'bing') {
             var cw = next(S.c.home.slice(), S.c.recent.slice()); cw.dailyBing = c === 'bing';
             if (write(cw, 'Daily photo')) { applyWallpaperEverywhere(); if (cw.dailyBing) fetchBingDaily(true); render(); }

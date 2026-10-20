@@ -55,7 +55,13 @@ if mode in ['apply', 'restore']:
 
 token = uuid.uuid4().hex[:12]
 remote = '/home/owner/share/tmp/sdk_tools/cfhi-' + token + '.sh'
-run(['-s', serial, 'push', str(r / 'scripts/native-home' / (mode + '.sh')), remote])
+# Normalise line endings first: a Windows checkout (core.autocrlf) turns the .sh files into CRLF,
+# which makes bash on the TV fail with "$'\r': command not found".
+d.mkdir(parents=True, exist_ok=True)
+sh_bytes = (r / 'scripts/native-home' / (mode + '.sh')).read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+staged = d / ('_push_' + mode + '.sh')
+staged.write_bytes(sh_bytes)
+run(['-s', serial, 'push', str(staged), remote])
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as route:
     route.connect((host, 9))
