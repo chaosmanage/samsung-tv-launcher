@@ -26,13 +26,19 @@ All notable changes to Clean Home (`KsHome0001.CleanHome`). Install/upgrade step
 - `scripts/native-home/run.py` normalises CRLF → LF before pushing the `.sh` probe (Windows checkouts broke bash
   on the TV); `.gitattributes` keeps `*.sh` as LF.
 
+### Verified on the real TV
+- **Toggle-Off Home flash fix (1.2.4 hotfix 3, commit 5dc6c45) confirmed by Kunal on the UA43DU7660KLXL**
+  (20 Oct 2026, ~21:10 IST): with *Use Clean Home as Home screen* Off, Home goes to Samsung Home with no
+  Clean Home flash. Debug-log timings on that build (20:56:33–20:56:51 IST, handoff on the `visible` hook while
+  the screen stays black): Samsung Home in front 642 / 357 / 576 ms (launch call 233 / 114 / 203 ms).
+
 ### Unchanged on purpose
 - Visuals elsewhere: clock and header text stay white, dock, glass and fonts as in 1.2.4 hotfix 3.
 - Storage: still one small `cleanhome.bing` value (now `{url, today, pick, date}`); images are never written to disk.
 
 ## 1.2.4 (2026-10-20), hotfix 1–3
 - Hotfix 3: Home-key handoff decided in an early `<head>` script with a black screen, so toggle Off goes to
-  Samsung Home without a Clean Home flash. Clock and header text back to white. Header lens keeps the 1.2.3 glass.
+  Samsung Home without a Clean Home flash (**verified on the real TV by Kunal, 20 Oct 2026**). Clock and header text back to white. Header lens keeps the 1.2.3 glass.
 - Hotfix 2: handoff evaluated on every entry hook (start, appcontrol, focus, visible, pageshow, resume),
   de-duplicated by `__K_APP_LAUNCH_START_TIME`; `scripts/_replay-home.js` replays real TV launch requests.
 - Hotfix 1: Home key detected by `entry_point=smarthub_key`; app-row launches never redirect; prefs never reset on recovery launch.

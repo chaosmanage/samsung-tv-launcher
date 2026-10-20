@@ -48,7 +48,7 @@ Times in Asia/Calcutta (IST). TV: UA43DU7660KLXL.
 | Kunal real Home press, toggle Off, previous build | FAIL | 20:37:44 focus-only smarthub_key event; handoff not evaluated on focus |
 | Replay of the logged requests through the new code (9 cases) | PASS | `node scripts/_replay-home.js`: Home key on focus and visible hand off once; stale/app-row/sdb/recovery/On don't |
 | New build installed and running | PASS | 20:44 pid 2104 STATUS_FOCUS; prefs found, dock 9 incl. Spotify, useAsHome false |
-| Real Home press with toggle Off (new build) | PENDING | Kunal |
+| Real Home press with toggle Off (new build) | PASS (superseded by hotfix 3) | see below |
 | TV Plus key reaches Clean Home | FAIL (platform) | 20:37:16 only `blur`, Samsung popup "You have disabled Samsung TV Plus"; no keydown |
 
 ## Hotfix 3 (20 Oct 2026, 20:56 IST)
@@ -60,4 +60,5 @@ Times in Asia/Calcutta (IST). TV: UA43DU7660KLXL.
 | Header focus lens vs 1.2.3 | PASS | pixel diff on the lens ≤ 14/255 (text cream → white) |
 | Settings overlap test | PASS | `_settings-overlap.mjs` all pages |
 | Installed on TV | PASS | 20:55:58 pid 2084 STATUS_FOCUS, prefs found (dock 9 incl. Spotify, toggle Off), utility lens = Bing photo, dock/sheet glass not loaded (solid) |
-| Home key → Samsung Home time after fix | PENDING | logged automatically as `home-handoff-front` on Kunal's next press |
+| Home key → Samsung Home time after fix | PASS | `home-handoff-front` 20:56:34 / 20:56:44 / 20:56:51: 642 / 357 / 576 ms (launch 233 / 114 / 203 ms), hook `visible`, screen black meanwhile |
+| Kunal: toggle Off, no Clean Home flash | **PASS (real TV)** | Confirmed by Kunal on the UA43DU7660KLXL, 20 Oct 2026 ~21:10 IST |
